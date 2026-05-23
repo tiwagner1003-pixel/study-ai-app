@@ -115,6 +115,9 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("pdf");
+    const subjectIdValue = formData.get("subject_id");
+    const subjectId = typeof subjectIdValue === "string" && subjectIdValue ? subjectIdValue : null;
+    let selectedSubject: { id: string; name: string; color: string } | null = null;
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Bitte lade eine PDF-Datei hoch." }, { status: 400 });
@@ -133,6 +136,21 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: "Der OpenAI API-Key fehlt." }, { status: 500 });
+    }
+
+    if (subjectId) {
+      const { data: subject, error: subjectError } = await supabase
+        .from("subjects")
+        .select("id, name, color")
+        .eq("id", subjectId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (subjectError || !subject) {
+        return NextResponse.json({ error: "Das ausgewählte Fach wurde nicht gefunden." }, { status: 404 });
+      }
+
+      selectedSubject = subject;
     }
 
     const pdfBytes = Buffer.from(await file.arrayBuffer());
@@ -177,6 +195,7 @@ Erstelle genau 5 Lernkarten.
       .from("documents")
       .insert({
         user_id: user.id,
+        subject_id: subjectId,
         file_name: file.name,
       })
       .select("id")
@@ -225,6 +244,9 @@ Erstelle genau 5 Lernkarten.
       analysis: {
         id: analysis.id,
         file_name: file.name,
+        subject_id: selectedSubject?.id || null,
+        subject_name: selectedSubject?.name || null,
+        subject_color: selectedSubject?.color || null,
         created_at: new Date().toISOString(),
         ...parsed,
       },

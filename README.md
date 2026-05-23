@@ -10,6 +10,7 @@ Eine erste echte Web-App-Version für Studierende:
 - Demo-Analyse ohne OpenAI-Guthaben testen
 - Kostenloses Monatslimit vorbereiten
 - Tester-Feedback in Supabase sammeln
+- Fächer/Module anlegen und Analysen zuordnen
 
 ## 1. Node.js installieren
 
@@ -171,11 +172,12 @@ Aktuell enthält sie auch:
 
 - `usage_events`: zählt PDF-Analysen unabhängig davon, ob ein Nutzer später eine Analyse löscht
 - `feedback`: speichert Tester-Feedback aus dem Formular in der App
+- `subjects`: speichert Fächer/Module und verknüpft Dokumente damit
 
 ## Nächste Ausbaustufen
 
-1. PDF-Dateien in Supabase Storage speichern
-2. Tester einladen
-3. Feedback auswerten
-4. Stripe Abo einbauen
-5. Lernfortschritt dauerhaft speichern
+1. Lernfortschritt dauerhaft speichern
+2. Spaced Repetition einbauen
+3. PDF-Dateien in Supabase Storage speichern
+4. Tester einladen und Feedback auswerten
+5. Stripe Abo einbauen

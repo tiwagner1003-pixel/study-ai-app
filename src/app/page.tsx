@@ -13,10 +13,20 @@ type Analysis = {
   id?: string;
   file_name?: string;
   created_at?: string;
+  subject_id?: string | null;
+  subject_name?: string | null;
+  subject_color?: string | null;
   summary: string;
   takeaways: string[];
   open_questions: string[];
   flashcards: Flashcard[];
+};
+
+type Subject = {
+  id: string;
+  name: string;
+  color: string;
+  created_at?: string;
 };
 
 type SavedAnalysisRow = {
@@ -25,7 +35,18 @@ type SavedAnalysisRow = {
   takeaways: string[];
   open_questions: string[];
   created_at: string;
-  documents: { file_name: string } | { file_name: string }[] | null;
+  documents:
+    | {
+        file_name: string;
+        subject_id: string | null;
+        subjects: { name: string; color: string } | { name: string; color: string }[] | null;
+      }
+    | {
+        file_name: string;
+        subject_id: string | null;
+        subjects: { name: string; color: string } | { name: string; color: string }[] | null;
+      }[]
+    | null;
   flashcards: Flashcard[];
 };
 
@@ -40,9 +61,15 @@ const FEEDBACK_OPTIONS = [
   { value: "no", label: "Nein" },
 ];
 
+const SUBJECT_COLORS = ["#16796f", "#2f6fbb", "#7c5cc4", "#a15c07", "#b42318"];
+const ALL_SUBJECTS = "all";
+
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
   file_name: "Demo: Einführung in Marketing.pdf",
+  subject_id: "demo-subject",
+  subject_name: "Marketing",
+  subject_color: "#16796f",
   created_at: new Date().toISOString(),
   summary:
     "Das Dokument erklärt die Grundlagen des Marketings und zeigt, wie Unternehmen Zielgruppen, Positionierung und Marketinginstrumente nutzen. Ein Schwerpunkt liegt auf dem Marketing-Mix mit Produkt, Preis, Distribution und Kommunikation. Zudem wird deutlich, dass Marketing nicht nur Werbung ist, sondern ein systematischer Prozess zur Schaffung von Kundennutzen. Erfolgreiches Marketing beginnt mit Marktanalyse und Segmentierung. Danach werden konkrete Strategien entwickelt, umgesetzt und kontrolliert.",
@@ -87,9 +114,12 @@ function getMonthStart() {
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 }
 
-function getFileName(documents: SavedAnalysisRow["documents"]) {
-  if (Array.isArray(documents)) return documents[0]?.file_name || "PDF";
-  return documents?.file_name || "PDF";
+function getDocument(documents: SavedAnalysisRow["documents"]) {
+  return Array.isArray(documents) ? documents[0] : documents;
+}
+
+function getSubject(subjects: NonNullable<ReturnType<typeof getDocument>>["subjects"]) {
+  return Array.isArray(subjects) ? subjects[0] : subjects;
 }
 
 function countThisMonth(analyses: Analysis[]) {
@@ -111,6 +141,12 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [savedAnalyses, setSavedAnalyses] = useState<Analysis[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(ALL_SUBJECTS);
+  const [uploadSubjectId, setUploadSubjectId] = useState("");
+  const [newSubjectName, setNewSubjectName] = useState("");
+  const [newSubjectColor, setNewSubjectColor] = useState(SUBJECT_COLORS[0]);
+  const [creatingSubject, setCreatingSubject] = useState(false);
   const [usedThisMonth, setUsedThisMonth] = useState(0);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -129,6 +165,10 @@ export default function Home() {
   const activeCard = analysis?.flashcards[currentCardIndex];
   const totalCards = analysis?.flashcards.length || 0;
   const answeredCards = knownCards + reviewCards;
+  const visibleAnalyses =
+    selectedSubjectId === ALL_SUBJECTS
+      ? savedAnalyses
+      : savedAnalyses.filter((item) => item.subject_id === selectedSubjectId);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -143,16 +183,33 @@ export default function Home() {
   useEffect(() => {
     if (!session) {
       setSavedAnalyses([]);
+      setSubjects([]);
       setUsedThisMonth(0);
       return;
     }
 
+    loadSubjects();
     loadAnalyses();
   }, [session]);
 
   useEffect(() => {
     resetCardSession();
   }, [analysis?.id]);
+
+  async function loadSubjects() {
+    const { data, error } = await supabase
+      .from("subjects")
+      .select("id, name, color, created_at")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    setSubjects(data || []);
+    setUploadSubjectId((current) => current || data?.[0]?.id || "");
+  }
 
   async function loadAnalyses() {
     const { data, error } = await supabase
@@ -164,7 +221,7 @@ export default function Home() {
         takeaways,
         open_questions,
         created_at,
-        documents(file_name),
+        documents(file_name, subject_id, subjects(name, color)),
         flashcards(question, answer)
       `,
       )
@@ -176,15 +233,23 @@ export default function Home() {
     }
 
     const rows = (data || []) as SavedAnalysisRow[];
-    const analyses = rows.map((row) => ({
-      id: row.id,
-      file_name: getFileName(row.documents),
-      created_at: row.created_at,
-      summary: row.summary,
-      takeaways: row.takeaways,
-      open_questions: row.open_questions,
-      flashcards: row.flashcards || [],
-    }));
+    const analyses = rows.map((row) => {
+      const document = getDocument(row.documents);
+      const subject = getSubject(document?.subjects || null);
+
+      return {
+        id: row.id,
+        file_name: document?.file_name || "PDF",
+        subject_id: document?.subject_id || null,
+        subject_name: subject?.name || null,
+        subject_color: subject?.color || null,
+        created_at: row.created_at,
+        summary: row.summary,
+        takeaways: row.takeaways,
+        open_questions: row.open_questions,
+        flashcards: row.flashcards || [],
+      };
+    });
 
     setSavedAnalyses(analyses);
     setAnalysis((current) => {
@@ -231,7 +296,49 @@ export default function Home() {
     await supabase.auth.signOut();
     setAnalysis(null);
     setSavedAnalyses([]);
+    setSubjects([]);
+    setSelectedSubjectId(ALL_SUBJECTS);
+    setUploadSubjectId("");
     setUsedThisMonth(0);
+  }
+
+  async function createSubject() {
+    if (!session) return;
+
+    setMessage("");
+
+    if (newSubjectName.trim().length < 2) {
+      setMessage("Bitte gib einen Fachnamen ein.");
+      return;
+    }
+
+    setCreatingSubject(true);
+
+    const response = await fetch("/api/subjects", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: newSubjectName,
+        color: newSubjectColor,
+      }),
+    });
+
+    const data = await response.json();
+    setCreatingSubject(false);
+
+    if (!response.ok) {
+      setMessage(data.error || "Das Fach konnte nicht erstellt werden.");
+      return;
+    }
+
+    setSubjects((current) => [...current, data.subject]);
+    setUploadSubjectId(data.subject.id);
+    setSelectedSubjectId(data.subject.id);
+    setNewSubjectName("");
+    setMessage("Fach erstellt.");
   }
 
   async function analyzePdf() {
@@ -253,6 +360,9 @@ export default function Home() {
 
     const formData = new FormData();
     formData.append("pdf", file);
+    if (uploadSubjectId) {
+      formData.append("subject_id", uploadSubjectId);
+    }
 
     const response = await fetch("/api/analyze", {
       method: "POST",
@@ -272,6 +382,7 @@ export default function Home() {
 
     setAnalysis(data.analysis);
     setSavedAnalyses((current) => [data.analysis, ...current]);
+    setSelectedSubjectId(data.analysis.subject_id || ALL_SUBJECTS);
     setUsedThisMonth(data.usage?.used || usedThisMonth + 1);
   }
 
@@ -300,6 +411,7 @@ export default function Home() {
       const withoutDemo = current.filter((item) => item.id !== DEMO_ANALYSIS.id);
       return [DEMO_ANALYSIS, ...withoutDemo];
     });
+    setSelectedSubjectId(ALL_SUBJECTS);
     setAnalysis(DEMO_ANALYSIS);
   }
 
@@ -482,6 +594,10 @@ export default function Home() {
               <strong>{savedAnalyses.length}</strong>
             </div>
             <div className="stat">
+              <span>Fächer</span>
+              <strong>{subjects.length}</strong>
+            </div>
+            <div className="stat">
               <span>Diesen Monat genutzt</span>
               <strong>
                 {usedThisMonth}/{FREE_MONTHLY_LIMIT}
@@ -500,6 +616,17 @@ export default function Home() {
                   <h1>Neue PDF-Datei</h1>
                   <p className="muted">Lade ein Skript, Paper oder eine Vorlesungs-PDF hoch.</p>
                 </div>
+                <label className="field">
+                  <span>Fach</span>
+                  <select value={uploadSubjectId} onChange={(event) => setUploadSubjectId(event.target.value)}>
+                    <option value="">Ohne Fach</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label className="upload-zone">
                   <input
                     type="file"
@@ -525,19 +652,71 @@ export default function Home() {
                 </div>
               </section>
 
+              <section className="panel subject-card">
+                <div>
+                  <h2>Fächer</h2>
+                  <p className="muted">Organisiere deine Unterlagen nach Modulen.</p>
+                </div>
+                <div className="subject-list">
+                  <button
+                    className={`subject-filter ${selectedSubjectId === ALL_SUBJECTS ? "active" : ""}`}
+                    onClick={() => setSelectedSubjectId(ALL_SUBJECTS)}
+                    type="button"
+                  >
+                    Alle Fächer
+                    <span>{savedAnalyses.length}</span>
+                  </button>
+                  {subjects.map((subject) => (
+                    <button
+                      className={`subject-filter ${selectedSubjectId === subject.id ? "active" : ""}`}
+                      key={subject.id}
+                      onClick={() => setSelectedSubjectId(subject.id)}
+                      type="button"
+                    >
+                      <span className="subject-dot" style={{ backgroundColor: subject.color }} />
+                      {subject.name}
+                      <span>{savedAnalyses.filter((item) => item.subject_id === subject.id).length}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="create-subject">
+                  <input
+                    onChange={(event) => setNewSubjectName(event.target.value)}
+                    placeholder="Neues Fach, z. B. Investition"
+                    value={newSubjectName}
+                  />
+                  <div className="color-row">
+                    {SUBJECT_COLORS.map((color) => (
+                      <button
+                        aria-label={`Farbe ${color}`}
+                        className={`color-swatch ${newSubjectColor === color ? "active" : ""}`}
+                        key={color}
+                        onClick={() => setNewSubjectColor(color)}
+                        style={{ backgroundColor: color }}
+                        type="button"
+                      />
+                    ))}
+                  </div>
+                  <button disabled={creatingSubject} onClick={createSubject} type="button">
+                    {creatingSubject ? "Erstellt..." : "Fach anlegen"}
+                  </button>
+                </div>
+              </section>
+
               <section className="panel history">
                 <div>
                   <h2>Bibliothek</h2>
                   <p className="muted">Deine gespeicherten Lernunterlagen.</p>
                 </div>
-                {savedAnalyses.length === 0 ? (
+                {visibleAnalyses.length === 0 ? (
                   <div className="empty-state">
                     <strong>Noch keine Dokumente</strong>
-                    <p>Lade deine erste PDF-Datei hoch, sobald OpenAI-Guthaben aktiv ist.</p>
+                    <p>Lade eine PDF-Datei hoch oder wechsle den Fachfilter.</p>
                   </div>
                 ) : (
                   <div className="history-list">
-                    {savedAnalyses.map((item) => (
+                    {visibleAnalyses.map((item) => (
                       <button
                         className={`history-item ${analysis?.id === item.id ? "active" : ""}`}
                         key={item.id}
@@ -545,6 +724,12 @@ export default function Home() {
                         type="button"
                       >
                         <span>{item.file_name}</span>
+                        {item.subject_name && (
+                          <small className="subject-badge">
+                            <span style={{ backgroundColor: item.subject_color || SUBJECT_COLORS[0] }} />
+                            {item.subject_name}
+                          </small>
+                        )}
                         <small>
                           {item.created_at ? new Date(item.created_at).toLocaleDateString("de-DE") : ""}
                         </small>
@@ -616,6 +801,12 @@ export default function Home() {
                 <div className="detail-header">
                   <div>
                     <p className="eyebrow">{analysis.file_name || "Aktuelle Analyse"}</p>
+                    {analysis.subject_name && (
+                      <p className="subject-badge detail-badge">
+                        <span style={{ backgroundColor: analysis.subject_color || SUBJECT_COLORS[0] }} />
+                        {analysis.subject_name}
+                      </p>
+                    )}
                     {analysis.created_at && (
                       <p className="muted">
                         Erstellt am {new Date(analysis.created_at).toLocaleDateString("de-DE")}

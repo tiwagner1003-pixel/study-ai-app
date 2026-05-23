@@ -1,8 +1,17 @@
 create extension if not exists "pgcrypto";
 
+create table if not exists public.subjects (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  color text not null default '#16796f',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.documents (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  subject_id uuid references public.subjects(id) on delete set null,
   file_name text not null,
   created_at timestamptz not null default now()
 );
@@ -16,6 +25,9 @@ create table if not exists public.analyses (
   open_questions text[] not null default '{}',
   created_at timestamptz not null default now()
 );
+
+alter table public.documents
+  add column if not exists subject_id uuid references public.subjects(id) on delete set null;
 
 create table if not exists public.flashcards (
   id uuid primary key default gen_random_uuid(),
@@ -44,16 +56,22 @@ create table if not exists public.feedback (
 );
 
 alter table public.documents enable row level security;
+alter table public.subjects enable row level security;
 alter table public.analyses enable row level security;
 alter table public.flashcards enable row level security;
 alter table public.usage_events enable row level security;
 alter table public.feedback enable row level security;
 
+drop policy if exists "Users can read own subjects" on public.subjects;
 drop policy if exists "Users can read own documents" on public.documents;
 drop policy if exists "Users can read own analyses" on public.analyses;
 drop policy if exists "Users can read own flashcards" on public.flashcards;
 drop policy if exists "Users can read own usage events" on public.usage_events;
 drop policy if exists "Users can read own feedback" on public.feedback;
+
+create policy "Users can read own subjects"
+  on public.subjects for select
+  using (auth.uid() = user_id);
 
 create policy "Users can read own documents"
   on public.documents for select
