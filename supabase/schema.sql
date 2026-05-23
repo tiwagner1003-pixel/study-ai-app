@@ -34,15 +34,26 @@ create table if not exists public.usage_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  rating integer not null check (rating between 1 and 5),
+  would_use text not null check (would_use in ('yes', 'maybe', 'no')),
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
 alter table public.documents enable row level security;
 alter table public.analyses enable row level security;
 alter table public.flashcards enable row level security;
 alter table public.usage_events enable row level security;
+alter table public.feedback enable row level security;
 
 drop policy if exists "Users can read own documents" on public.documents;
 drop policy if exists "Users can read own analyses" on public.analyses;
 drop policy if exists "Users can read own flashcards" on public.flashcards;
 drop policy if exists "Users can read own usage events" on public.usage_events;
+drop policy if exists "Users can read own feedback" on public.feedback;
 
 create policy "Users can read own documents"
   on public.documents for select
@@ -58,4 +69,8 @@ create policy "Users can read own flashcards"
 
 create policy "Users can read own usage events"
   on public.usage_events for select
+  using (auth.uid() = user_id);
+
+create policy "Users can read own feedback"
+  on public.feedback for select
   using (auth.uid() = user_id);

@@ -34,6 +34,12 @@ const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const MAX_PDF_SIZE_LABEL = "10 MB";
 const FEEDBACK_EMAIL = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || "";
 
+const FEEDBACK_OPTIONS = [
+  { value: "yes", label: "Ja" },
+  { value: "maybe", label: "Vielleicht" },
+  { value: "no", label: "Nein" },
+];
+
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
   file_name: "Demo: Einfuehrung in Marketing.pdf",
@@ -113,6 +119,11 @@ export default function Home() {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   const [knownCards, setKnownCards] = useState(0);
   const [reviewCards, setReviewCards] = useState(0);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackWouldUse, setFeedbackWouldUse] = useState("maybe");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   const remainingAnalyses = Math.max(FREE_MONTHLY_LIMIT - usedThisMonth, 0);
   const activeCard = analysis?.flashcards[currentCardIndex];
@@ -353,6 +364,43 @@ export default function Home() {
     });
   }
 
+  async function submitFeedback() {
+    if (!session) return;
+
+    setFeedbackStatus("");
+
+    if (feedbackMessage.trim().length < 10) {
+      setFeedbackStatus("Bitte schreibe mindestens 10 Zeichen Feedback.");
+      return;
+    }
+
+    setSubmittingFeedback(true);
+
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        rating: feedbackRating,
+        wouldUse: feedbackWouldUse,
+        message: feedbackMessage,
+      }),
+    });
+
+    const data = await response.json();
+    setSubmittingFeedback(false);
+
+    if (!response.ok) {
+      setFeedbackStatus(data.error || "Feedback konnte nicht gespeichert werden.");
+      return;
+    }
+
+    setFeedbackMessage("");
+    setFeedbackStatus("Danke, dein Feedback wurde gespeichert.");
+  }
+
   return (
     <main className="shell">
       <div className="topbar">
@@ -484,6 +532,56 @@ export default function Home() {
                     ))}
                   </div>
                 )}
+              </section>
+
+              <section className="panel feedback-card">
+                <div>
+                  <h2>Feedback</h2>
+                  <p className="muted">Hilf mit, Study AI fuer Studenten nuetzlicher zu machen.</p>
+                </div>
+
+                <label className="field">
+                  <span>Bewertung</span>
+                  <select value={feedbackRating} onChange={(event) => setFeedbackRating(Number(event.target.value))}>
+                    <option value={5}>5 - Sehr hilfreich</option>
+                    <option value={4}>4 - Hilfreich</option>
+                    <option value={3}>3 - Okay</option>
+                    <option value={2}>2 - Noch schwach</option>
+                    <option value={1}>1 - Nicht hilfreich</option>
+                  </select>
+                </label>
+
+                <fieldset className="field">
+                  <legend>Wuerdest du Study AI nutzen?</legend>
+                  <div className="option-row">
+                    {FEEDBACK_OPTIONS.map((option) => (
+                      <label key={option.value}>
+                        <input
+                          checked={feedbackWouldUse === option.value}
+                          name="would-use"
+                          onChange={() => setFeedbackWouldUse(option.value)}
+                          type="radio"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <label className="field">
+                  <span>Was fehlt oder stoert?</span>
+                  <textarea
+                    maxLength={1200}
+                    onChange={(event) => setFeedbackMessage(event.target.value)}
+                    placeholder="Zum Beispiel: Lernkarten sind hilfreich, aber ich brauche Export nach Anki..."
+                    value={feedbackMessage}
+                  />
+                </label>
+
+                <button disabled={submittingFeedback} onClick={submitFeedback} type="button">
+                  {submittingFeedback ? "Speichert..." : "Feedback speichern"}
+                </button>
+                {feedbackStatus && <p className="notice">{feedbackStatus}</p>}
               </section>
             </aside>
 

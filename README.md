@@ -9,6 +9,7 @@ Eine erste echte Web-App-Version fuer Studenten:
 - Zusammenfassung, Takeaways, offene Fragen und Lernkarten anzeigen
 - Demo-Analyse ohne OpenAI-Guthaben testen
 - Kostenloses Monatslimit vorbereiten
+- Tester-Feedback in Supabase sammeln
 
 ## 1. Node.js installieren
 
@@ -166,8 +167,10 @@ http://localhost:3003/**
 Die Datei `supabase/schema.sql` ist wiederholbar. Du kannst sie im Supabase SQL
 Editor erneut ausfuehren, wenn neue Tabellen oder Policies dazukommen.
 
-Aktuell enthaelt sie auch `usage_events`. Diese Tabelle zaehlt PDF-Analysen
-unabhaengig davon, ob ein Nutzer spaeter eine Analyse loescht.
+Aktuell enthaelt sie auch:
+
+- `usage_events`: zaehlt PDF-Analysen unabhaengig davon, ob ein Nutzer spaeter eine Analyse loescht
+- `feedback`: speichert Tester-Feedback aus dem Formular in der App
 
 ## Naechste Ausbaustufen
 
