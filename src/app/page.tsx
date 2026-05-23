@@ -77,7 +77,7 @@ const DEMO_ANALYSIS: Analysis = {
     },
     {
       question: "Warum ist Erfolgskontrolle im Marketing wichtig?",
-      answer: "Sie zeigt, ob Massnahmen wirken und wo die Strategie angepasst werden muss.",
+      answer: "Sie zeigt, ob Maßnahmen wirken und wo die Strategie angepasst werden muss.",
     },
   ],
 };
@@ -405,7 +405,10 @@ export default function Home() {
     <main className="shell">
       <div className="topbar">
         <div>
-          <div className="brand">Study AI</div>
+          <div className="brand">
+            <span className="brand-mark">S</span>
+            Study AI
+          </div>
           <p className="muted">PDFs in Zusammenfassungen, Fragen und Lernkarten verwandeln.</p>
         </div>
         <div className="topbar-actions">
@@ -429,9 +432,23 @@ export default function Home() {
               <span>Takeaways speichern</span>
               <span>Lernkarten üben</span>
             </div>
+            <div className="product-preview" aria-label="Beispielanalyse">
+              <div className="preview-header">
+                <span>Beispielanalyse</span>
+                <strong>5 Lernkarten</strong>
+              </div>
+              <div className="preview-content">
+                <p>Zusammenfassung</p>
+                <strong>Marketing beginnt mit dem Verstehen von Kundenbedürfnissen.</strong>
+              </div>
+              <div className="preview-flashcard">
+                <span>Frage</span>
+                <p>Welche vier Elemente gehören zum Marketing-Mix?</p>
+              </div>
+            </div>
           </div>
 
-          <div className="panel stack">
+          <div className="panel auth-panel stack">
             <h2>Einloggen</h2>
             <p className="muted">Erstelle einen Account oder logge dich ein.</p>
             <div className="stack">
@@ -483,12 +500,15 @@ export default function Home() {
                   <h1>Neue PDF-Datei</h1>
                   <p className="muted">Lade ein Skript, Paper oder eine Vorlesungs-PDF hoch.</p>
                 </div>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(event) => handleFileChange(event.target.files?.[0] || null)}
-                />
-                <p className="muted">Nur PDF-Dateien bis {MAX_PDF_SIZE_LABEL}.</p>
+                <label className="upload-zone">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(event) => handleFileChange(event.target.files?.[0] || null)}
+                  />
+                  <strong>{file ? file.name : "PDF auswählen"}</strong>
+                  <span>Nur PDF-Dateien bis {MAX_PDF_SIZE_LABEL}</span>
+                </label>
                 <button disabled={!file || loading || remainingAnalyses === 0} onClick={analyzePdf}>
                   {loading ? "Analyse läuft..." : "PDF analysieren"}
                 </button>
@@ -507,7 +527,7 @@ export default function Home() {
 
               <section className="panel history">
                 <div>
-                  <h2>Dokumente</h2>
+                  <h2>Bibliothek</h2>
                   <p className="muted">Deine gespeicherten Lernunterlagen.</p>
                 </div>
                 {savedAnalyses.length === 0 ? (
@@ -585,7 +605,7 @@ export default function Home() {
               </section>
             </aside>
 
-            <section className="panel result">
+            <section className="panel result detail-panel">
             {!analysis ? (
               <div className="empty-state large">
                 <strong>Kein Dokument ausgewählt</strong>
@@ -618,12 +638,12 @@ export default function Home() {
                   )}
                 </div>
 
-                <div>
+                <div className="content-section">
                   <h2>Zusammenfassung</h2>
                   <p>{analysis.summary}</p>
                 </div>
 
-                <div>
+                <div className="content-section">
                   <h2>Key Takeaways</h2>
                   <ul className="list">
                     {analysis.takeaways.map((item) => (
@@ -632,7 +652,7 @@ export default function Home() {
                   </ul>
                 </div>
 
-                <div>
+                <div className="content-section">
                   <h2>Offene Fragen</h2>
                   <ul className="list">
                     {analysis.open_questions.map((item) => (
@@ -641,7 +661,7 @@ export default function Home() {
                   </ul>
                 </div>
 
-                <div>
+                <div className="content-section">
                   <h2>Lernkarten</h2>
                   {totalCards === 0 ? (
                     <div className="empty-state">
