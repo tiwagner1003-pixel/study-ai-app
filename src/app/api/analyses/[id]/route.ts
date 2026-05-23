@@ -21,7 +21,7 @@ export async function DELETE(
     } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Login konnte nicht geprueft werden." }, { status: 401 });
+      return NextResponse.json({ error: "Login konnte nicht geprüft werden." }, { status: 401 });
     }
 
     const { data: analysis, error: analysisError } = await supabase

@@ -47,14 +47,14 @@ function getFriendlyError(error: unknown) {
   if (apiError.status === 429 || apiError.code === "insufficient_quota") {
     return {
       message:
-        "Dein OpenAI API-Konto hat aktuell kein verfuegbares Guthaben oder kein aktives Billing.",
+        "Dein OpenAI API-Konto hat aktuell kein verfügbares Guthaben oder kein aktives Billing.",
       status: 402,
     };
   }
 
   if (apiError.status === 401 || apiError.code === "invalid_api_key") {
     return {
-      message: "Der OpenAI API-Key ist ungueltig oder fehlt.",
+      message: "Der OpenAI API-Key ist ungültig oder fehlt.",
       status: 401,
     };
   }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Login konnte nicht geprueft werden." }, { status: 401 });
+      return NextResponse.json({ error: "Login konnte nicht geprüft werden." }, { status: 401 });
     }
 
     const { count: usageCount, error: usageCountError } = await supabase
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get("pdf");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Bitte ein PDF hochladen." }, { status: 400 });
+      return NextResponse.json({ error: "Bitte lade eine PDF-Datei hoch." }, { status: 400 });
     }
 
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     if (file.size > MAX_PDF_BYTES) {
       return NextResponse.json(
-        { error: "Das PDF ist zu gross. Bitte lade maximal 10 MB hoch." },
+        { error: "Das PDF ist zu groß. Bitte lade maximal 10 MB hoch." },
         { status: 413 },
       );
     }
@@ -154,9 +154,9 @@ export async function POST(request: NextRequest) {
               type: "input_text",
               text: `
 Analysiere dieses PDF auf Deutsch.
-Antworte nur als gueltiges JSON in diesem Format:
+Antworte nur als gültiges JSON in diesem Format:
 {
-  "summary": "5 bis 8 Saetze",
+  "summary": "5 bis 8 Sätze",
   "takeaways": ["Punkt 1", "Punkt 2", "Punkt 3", "Punkt 4", "Punkt 5"],
   "open_questions": ["Frage 1", "Frage 2", "Frage 3"],
   "flashcards": [

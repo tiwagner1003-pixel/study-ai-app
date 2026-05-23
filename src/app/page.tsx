@@ -42,29 +42,29 @@ const FEEDBACK_OPTIONS = [
 
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
-  file_name: "Demo: Einfuehrung in Marketing.pdf",
+  file_name: "Demo: Einführung in Marketing.pdf",
   created_at: new Date().toISOString(),
   summary:
-    "Das Dokument erklaert die Grundlagen des Marketings und zeigt, wie Unternehmen Zielgruppen, Positionierung und Marketinginstrumente nutzen. Ein Schwerpunkt liegt auf dem Marketing-Mix mit Produkt, Preis, Distribution und Kommunikation. Zudem wird deutlich, dass Marketing nicht nur Werbung ist, sondern ein systematischer Prozess zur Schaffung von Kundennutzen. Erfolgreiches Marketing beginnt mit Marktanalyse und Segmentierung. Danach werden konkrete Strategien entwickelt, umgesetzt und kontrolliert.",
+    "Das Dokument erklärt die Grundlagen des Marketings und zeigt, wie Unternehmen Zielgruppen, Positionierung und Marketinginstrumente nutzen. Ein Schwerpunkt liegt auf dem Marketing-Mix mit Produkt, Preis, Distribution und Kommunikation. Zudem wird deutlich, dass Marketing nicht nur Werbung ist, sondern ein systematischer Prozess zur Schaffung von Kundennutzen. Erfolgreiches Marketing beginnt mit Marktanalyse und Segmentierung. Danach werden konkrete Strategien entwickelt, umgesetzt und kontrolliert.",
   takeaways: [
-    "Marketing beginnt mit dem Verstehen von Kundenbeduerfnissen.",
+    "Marketing beginnt mit dem Verstehen von Kundenbedürfnissen.",
     "Segmentierung hilft, passende Zielgruppen klar zu definieren.",
     "Der Marketing-Mix besteht aus Produkt, Preis, Distribution und Kommunikation.",
     "Positionierung entscheidet, wie ein Angebot im Markt wahrgenommen wird.",
     "Kontrolle und Anpassung sind Teil eines professionellen Marketingprozesses.",
   ],
   open_questions: [
-    "Wie unterscheidet sich Marketing in B2B- und B2C-Maerkten?",
+    "Wie unterscheidet sich Marketing in B2B- und B2C-Märkten?",
     "Welche Rolle spielen Daten bei moderner Marktsegmentierung?",
     "Wann ist eine Premium-Positionierung sinnvoll?",
   ],
   flashcards: [
     {
       question: "Was ist das Ziel von Marktsegmentierung?",
-      answer: "Ein Gesamtmarkt wird in kleinere Gruppen mit aehnlichen Beduerfnissen eingeteilt.",
+      answer: "Ein Gesamtmarkt wird in kleinere Gruppen mit ähnlichen Bedürfnissen eingeteilt.",
     },
     {
-      question: "Welche vier Elemente gehoeren zum klassischen Marketing-Mix?",
+      question: "Welche vier Elemente gehören zum klassischen Marketing-Mix?",
       answer: "Produkt, Preis, Distribution und Kommunikation.",
     },
     {
@@ -213,7 +213,7 @@ export default function Home() {
     }
 
     const { error } = await supabase.auth.signUp({ email, password });
-    setMessage(error ? error.message : "Account erstellt. Falls Supabase eine Mail sendet, bestaetige sie kurz.");
+    setMessage(error ? error.message : "Account erstellt. Falls Supabase eine Mail sendet, bestätige sie kurz.");
   }
 
   async function signIn() {
@@ -243,7 +243,7 @@ export default function Home() {
     }
 
     if (file.size > MAX_PDF_BYTES) {
-      setMessage(`Das PDF ist zu gross. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
+      setMessage(`Das PDF ist zu groß. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
       return;
     }
 
@@ -287,7 +287,7 @@ export default function Home() {
     }
 
     if (nextFile.size > MAX_PDF_BYTES) {
-      setMessage(`Das PDF ist zu gross. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
+      setMessage(`Das PDF ist zu groß. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
       return;
     }
 
@@ -295,7 +295,7 @@ export default function Home() {
   }
 
   function loadDemoAnalysis() {
-    setMessage("Demo-Analyse geladen. Sie wird nicht gespeichert und zaehlt nicht ins Monatslimit.");
+    setMessage("Demo-Analyse geladen. Sie wird nicht gespeichert und zählt nicht ins Monatslimit.");
     setSavedAnalyses((current) => {
       const withoutDemo = current.filter((item) => item.id !== DEMO_ANALYSIS.id);
       return [DEMO_ANALYSIS, ...withoutDemo];
@@ -333,7 +333,7 @@ export default function Home() {
       return;
     }
 
-    const confirmed = window.confirm("Diese Analyse wirklich loeschen?");
+    const confirmed = window.confirm("Diese Analyse wirklich löschen?");
     if (!confirmed) return;
 
     setDeletingId(id);
@@ -350,7 +350,7 @@ export default function Home() {
     setDeletingId(null);
 
     if (!response.ok) {
-      setMessage(data.error || "Die Analyse konnte nicht geloescht werden.");
+      setMessage(data.error || "Die Analyse konnte nicht gelöscht werden.");
       return;
     }
 
@@ -422,12 +422,12 @@ export default function Home() {
             <p className="eyebrow">Lernmaterial aus PDFs</p>
             <h1>Aus Skripten werden Zusammenfassungen, Fragen und Lernkarten.</h1>
             <p className="muted">
-              Lade ein PDF hoch, erhalte strukturiertes Lernmaterial und uebe direkt mit Karten.
+              Lade eine PDF-Datei hoch. Du erhältst strukturiertes Lernmaterial und übst direkt mit Karten.
             </p>
             <div className="feature-list">
               <span>PDF analysieren</span>
               <span>Takeaways speichern</span>
-              <span>Lernkarten ueben</span>
+              <span>Lernkarten üben</span>
             </div>
           </div>
 
@@ -480,8 +480,8 @@ export default function Home() {
             <aside className="sidebar">
               <section className="panel stack">
                 <div>
-                  <h1>Neues PDF</h1>
-                  <p className="muted">Lade ein Skript, Paper oder Vorlesungs-PDF hoch.</p>
+                  <h1>Neue PDF-Datei</h1>
+                  <p className="muted">Lade ein Skript, Paper oder eine Vorlesungs-PDF hoch.</p>
                 </div>
                 <input
                   type="file"
@@ -490,7 +490,7 @@ export default function Home() {
                 />
                 <p className="muted">Nur PDF-Dateien bis {MAX_PDF_SIZE_LABEL}.</p>
                 <button disabled={!file || loading || remainingAnalyses === 0} onClick={analyzePdf}>
-                  {loading ? "Analyse laeuft..." : "PDF analysieren"}
+                  {loading ? "Analyse läuft..." : "PDF analysieren"}
                 </button>
                 <button className="secondary-button" onClick={loadDemoAnalysis} type="button">
                   Demo-Analyse laden
@@ -513,7 +513,7 @@ export default function Home() {
                 {savedAnalyses.length === 0 ? (
                   <div className="empty-state">
                     <strong>Noch keine Dokumente</strong>
-                    <p>Lade dein erstes PDF hoch, sobald OpenAI-Guthaben aktiv ist.</p>
+                    <p>Lade deine erste PDF-Datei hoch, sobald OpenAI-Guthaben aktiv ist.</p>
                   </div>
                 ) : (
                   <div className="history-list">
@@ -537,7 +537,7 @@ export default function Home() {
               <section className="panel feedback-card">
                 <div>
                   <h2>Feedback</h2>
-                  <p className="muted">Hilf mit, Study AI fuer Studenten nuetzlicher zu machen.</p>
+                  <p className="muted">Hilf mit, Study AI für Studierende nützlicher zu machen.</p>
                 </div>
 
                 <label className="field">
@@ -552,7 +552,7 @@ export default function Home() {
                 </label>
 
                 <fieldset className="field">
-                  <legend>Wuerdest du Study AI nutzen?</legend>
+                  <legend>Würdest du Study AI nutzen?</legend>
                   <div className="option-row">
                     {FEEDBACK_OPTIONS.map((option) => (
                       <label key={option.value}>
@@ -569,7 +569,7 @@ export default function Home() {
                 </fieldset>
 
                 <label className="field">
-                  <span>Was fehlt oder stoert?</span>
+                  <span>Was fehlt oder stört?</span>
                   <textarea
                     maxLength={1200}
                     onChange={(event) => setFeedbackMessage(event.target.value)}
@@ -588,8 +588,8 @@ export default function Home() {
             <section className="panel result">
             {!analysis ? (
               <div className="empty-state large">
-                <strong>Kein Dokument ausgewaehlt</strong>
-                <p>Waehle links eine gespeicherte Analyse oder lade ein neues PDF hoch.</p>
+                <strong>Kein Dokument ausgewählt</strong>
+                <p>Wähle links eine gespeicherte Analyse oder lade eine neue PDF-Datei hoch.</p>
               </div>
             ) : (
               <>
@@ -612,8 +612,8 @@ export default function Home() {
                       {analysis.id === DEMO_ANALYSIS.id
                         ? "Demo entfernen"
                         : deletingId === analysis.id
-                          ? "Loescht..."
-                          : "Loeschen"}
+                          ? "Löscht..."
+                          : "Löschen"}
                     </button>
                   )}
                 </div>
@@ -646,7 +646,7 @@ export default function Home() {
                   {totalCards === 0 ? (
                     <div className="empty-state">
                       <strong>Keine Lernkarten vorhanden</strong>
-                      <p>Diese Analyse enthaelt noch keine Lernkarten.</p>
+                      <p>Diese Analyse enthält noch keine Lernkarten.</p>
                     </div>
                   ) : (
                     <div className="study-mode">
@@ -691,7 +691,7 @@ export default function Home() {
                                   Gewusst
                                 </button>
                                 <button className="secondary-button" onClick={() => answerCard("review")} type="button">
-                                  Nochmal ueben
+                                  Nochmal üben
                                 </button>
                               </div>
                             </div>

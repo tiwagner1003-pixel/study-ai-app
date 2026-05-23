@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Login konnte nicht geprueft werden." }, { status: 401 });
+      return NextResponse.json({ error: "Login konnte nicht geprüft werden." }, { status: 401 });
     }
 
     const body = await request.json();
@@ -28,11 +28,11 @@ export async function POST(request: NextRequest) {
     const message = String(body.message || "").trim();
 
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return NextResponse.json({ error: "Bitte waehle eine Bewertung von 1 bis 5." }, { status: 400 });
+      return NextResponse.json({ error: "Bitte wähle eine Bewertung von 1 bis 5." }, { status: 400 });
     }
 
     if (!["yes", "maybe", "no"].includes(wouldUse)) {
-      return NextResponse.json({ error: "Bitte waehle aus, ob du Study AI nutzen wuerdest." }, { status: 400 });
+      return NextResponse.json({ error: "Bitte wähle aus, ob du Study AI nutzen würdest." }, { status: 400 });
     }
 
     if (message.length < 10) {

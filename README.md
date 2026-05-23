@@ -1,6 +1,6 @@
 # Study AI App
 
-Eine erste echte Web-App-Version fuer Studenten:
+Eine erste echte Web-App-Version für Studierende:
 
 - Account erstellen und einloggen
 - PDF hochladen
@@ -17,7 +17,7 @@ Installiere zuerst Node.js LTS:
 
 https://nodejs.org
 
-Danach im Terminal pruefen:
+Danach im Terminal prüfen:
 
 ```bash
 node -v
@@ -35,10 +35,10 @@ npm install
 
 In Supabase:
 
-1. Projekt oeffnen
+1. Projekt öffnen
 2. Links auf SQL Editor
 3. New query
-4. Inhalt aus `supabase/schema.sql` einfuegen
+4. Inhalt aus `supabase/schema.sql` einfügen
 5. Run klicken
 
 ## 4. Environment Variables eintragen
@@ -47,7 +47,7 @@ In Supabase:
 cp .env.local.example .env.local
 ```
 
-Dann `.env.local` oeffnen und die Werte eintragen:
+Dann `.env.local` öffnen und die Werte eintragen:
 
 ```bash
 OPENAI_API_KEY="..."
@@ -62,7 +62,7 @@ Supabase-Werte findest du hier:
 - Project Settings
 - API
 
-Wichtig: `SUPABASE_SERVICE_ROLE_KEY` und `OPENAI_API_KEY` niemals oeffentlich teilen.
+Wichtig: `SUPABASE_SERVICE_ROLE_KEY` und `OPENAI_API_KEY` niemals öffentlich teilen.
 
 ## 5. App starten
 
@@ -70,13 +70,13 @@ Wichtig: `SUPABASE_SERVICE_ROLE_KEY` und `OPENAI_API_KEY` niemals oeffentlich te
 npm run dev
 ```
 
-Dann oeffnen:
+Dann öffnen:
 
 ```text
 http://localhost:3000
 ```
 
-## 6. Lokal pruefen
+## 6. Lokal prüfen
 
 Vor jedem Deployment:
 
@@ -101,7 +101,7 @@ Dann in GitHub ein neues Repository erstellen, zum Beispiel:
 study-ai-app
 ```
 
-Danach die Befehle aus GitHub verwenden, ungefaehr so:
+Danach die Befehle aus GitHub verwenden, ungefähr so:
 
 ```bash
 git remote add origin https://github.com/DEIN-USERNAME/study-ai-app.git
@@ -131,10 +131,10 @@ NEXT_PUBLIC_FEEDBACK_EMAIL=""
 ```
 
 Die Werte sind dieselben wie in deiner lokalen `.env.local`.
-`NEXT_PUBLIC_FEEDBACK_EMAIL` ist optional. Wenn du eine Mailadresse eintraegst,
-oeffnet der Feedback-Link direkt eine Mail an diese Adresse.
+`NEXT_PUBLIC_FEEDBACK_EMAIL` ist optional. Wenn du eine Mailadresse einträgst,
+öffnet der Feedback-Link direkt eine Mail an diese Adresse.
 
-## 9. Supabase Auth fuer Vercel einstellen
+## 9. Supabase Auth für Vercel einstellen
 
 Wenn Vercel dir eine URL gibt, zum Beispiel:
 
@@ -144,16 +144,16 @@ https://study-ai-app.vercel.app
 
 Dann in Supabase:
 
-1. Authentication oeffnen
-2. URL Configuration oeffnen
+1. Authentication öffnen
+2. URL Configuration öffnen
 3. Site URL auf deine Vercel-URL setzen
-4. Redirect URL hinzufuegen:
+4. Redirect URL hinzufügen:
 
 ```text
 https://study-ai-app.vercel.app/**
 ```
 
-Fuer lokale Entwicklung kannst du zusaetzlich behalten:
+Für lokale Entwicklung kannst du zusätzlich behalten:
 
 ```text
 http://localhost:3000/**
@@ -162,17 +162,17 @@ http://localhost:3002/**
 http://localhost:3003/**
 ```
 
-## 10. Wenn sich die Datenbankstruktur aendert
+## 10. Wenn sich die Datenbankstruktur ändert
 
 Die Datei `supabase/schema.sql` ist wiederholbar. Du kannst sie im Supabase SQL
-Editor erneut ausfuehren, wenn neue Tabellen oder Policies dazukommen.
+Editor erneut ausführen, wenn neue Tabellen oder Policies dazukommen.
 
-Aktuell enthaelt sie auch:
+Aktuell enthält sie auch:
 
-- `usage_events`: zaehlt PDF-Analysen unabhaengig davon, ob ein Nutzer spaeter eine Analyse loescht
+- `usage_events`: zählt PDF-Analysen unabhängig davon, ob ein Nutzer später eine Analyse löscht
 - `feedback`: speichert Tester-Feedback aus dem Formular in der App
 
-## Naechste Ausbaustufen
+## Nächste Ausbaustufen
 
 1. PDF-Dateien in Supabase Storage speichern
 2. Tester einladen
