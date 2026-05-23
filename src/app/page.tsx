@@ -30,6 +30,51 @@ type SavedAnalysisRow = {
 };
 
 const FREE_MONTHLY_LIMIT = 3;
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
+const MAX_PDF_SIZE_LABEL = "10 MB";
+const FEEDBACK_EMAIL = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || "";
+
+const DEMO_ANALYSIS: Analysis = {
+  id: "demo-analysis",
+  file_name: "Demo: Einfuehrung in Marketing.pdf",
+  created_at: new Date().toISOString(),
+  summary:
+    "Das Dokument erklaert die Grundlagen des Marketings und zeigt, wie Unternehmen Zielgruppen, Positionierung und Marketinginstrumente nutzen. Ein Schwerpunkt liegt auf dem Marketing-Mix mit Produkt, Preis, Distribution und Kommunikation. Zudem wird deutlich, dass Marketing nicht nur Werbung ist, sondern ein systematischer Prozess zur Schaffung von Kundennutzen. Erfolgreiches Marketing beginnt mit Marktanalyse und Segmentierung. Danach werden konkrete Strategien entwickelt, umgesetzt und kontrolliert.",
+  takeaways: [
+    "Marketing beginnt mit dem Verstehen von Kundenbeduerfnissen.",
+    "Segmentierung hilft, passende Zielgruppen klar zu definieren.",
+    "Der Marketing-Mix besteht aus Produkt, Preis, Distribution und Kommunikation.",
+    "Positionierung entscheidet, wie ein Angebot im Markt wahrgenommen wird.",
+    "Kontrolle und Anpassung sind Teil eines professionellen Marketingprozesses.",
+  ],
+  open_questions: [
+    "Wie unterscheidet sich Marketing in B2B- und B2C-Maerkten?",
+    "Welche Rolle spielen Daten bei moderner Marktsegmentierung?",
+    "Wann ist eine Premium-Positionierung sinnvoll?",
+  ],
+  flashcards: [
+    {
+      question: "Was ist das Ziel von Marktsegmentierung?",
+      answer: "Ein Gesamtmarkt wird in kleinere Gruppen mit aehnlichen Beduerfnissen eingeteilt.",
+    },
+    {
+      question: "Welche vier Elemente gehoeren zum klassischen Marketing-Mix?",
+      answer: "Produkt, Preis, Distribution und Kommunikation.",
+    },
+    {
+      question: "Was bedeutet Positionierung?",
+      answer: "Die gezielte Gestaltung der Wahrnehmung eines Angebots im Kopf der Zielgruppe.",
+    },
+    {
+      question: "Warum ist Marketing mehr als Werbung?",
+      answer: "Weil es Analyse, Strategie, Produktgestaltung, Preis, Vertrieb und Kommunikation umfasst.",
+    },
+    {
+      question: "Warum ist Erfolgskontrolle im Marketing wichtig?",
+      answer: "Sie zeigt, ob Massnahmen wirken und wo die Strategie angepasst werden muss.",
+    },
+  ],
+};
 
 function getMonthStart() {
   const now = new Date();
@@ -43,7 +88,14 @@ function getFileName(documents: SavedAnalysisRow["documents"]) {
 
 function countThisMonth(analyses: Analysis[]) {
   const monthStart = getMonthStart();
-  return analyses.filter((item) => item.created_at && item.created_at >= monthStart).length;
+  return analyses.filter((item) => item.id !== DEMO_ANALYSIS.id && item.created_at && item.created_at >= monthStart)
+    .length;
+}
+
+function getFeedbackHref() {
+  const subject = encodeURIComponent("Feedback zu Study AI");
+  if (!FEEDBACK_EMAIL) return `mailto:?subject=${subject}`;
+  return `mailto:${FEEDBACK_EMAIL}?subject=${subject}`;
 }
 
 export default function Home() {
@@ -128,17 +180,38 @@ export default function Home() {
       if (!current?.id) return analyses[0] || null;
       return analyses.find((item) => item.id === current.id) || analyses[0] || null;
     });
-    setUsedThisMonth(countThisMonth(analyses));
+
+    const { count: usageCount, error: usageError } = await supabase
+      .from("usage_events")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", getMonthStart());
+
+    setUsedThisMonth(usageError ? countThisMonth(analyses) : usageCount || 0);
   }
 
   async function signUp() {
     setMessage("");
+    if (!email || !password) {
+      setMessage("Bitte E-Mail und Passwort eintragen.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setMessage("Das Passwort sollte mindestens 6 Zeichen haben.");
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({ email, password });
-    setMessage(error ? error.message : "Account erstellt. Du kannst dich jetzt einloggen.");
+    setMessage(error ? error.message : "Account erstellt. Falls Supabase eine Mail sendet, bestaetige sie kurz.");
   }
 
   async function signIn() {
     setMessage("");
+    if (!email || !password) {
+      setMessage("Bitte E-Mail und Passwort eintragen.");
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setMessage(error.message);
   }
@@ -152,6 +225,16 @@ export default function Home() {
 
   async function analyzePdf() {
     if (!file || !session) return;
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      setMessage("Bitte lade eine PDF-Datei hoch.");
+      return;
+    }
+
+    if (file.size > MAX_PDF_BYTES) {
+      setMessage(`Das PDF ist zu gross. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
+      return;
+    }
 
     setLoading(true);
     setMessage("");
@@ -181,6 +264,34 @@ export default function Home() {
     setUsedThisMonth(data.usage?.used || usedThisMonth + 1);
   }
 
+  function handleFileChange(nextFile: File | null) {
+    setMessage("");
+    setFile(null);
+
+    if (!nextFile) return;
+
+    if (nextFile.type !== "application/pdf" && !nextFile.name.toLowerCase().endsWith(".pdf")) {
+      setMessage("Bitte lade eine PDF-Datei hoch.");
+      return;
+    }
+
+    if (nextFile.size > MAX_PDF_BYTES) {
+      setMessage(`Das PDF ist zu gross. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
+      return;
+    }
+
+    setFile(nextFile);
+  }
+
+  function loadDemoAnalysis() {
+    setMessage("Demo-Analyse geladen. Sie wird nicht gespeichert und zaehlt nicht ins Monatslimit.");
+    setSavedAnalyses((current) => {
+      const withoutDemo = current.filter((item) => item.id !== DEMO_ANALYSIS.id);
+      return [DEMO_ANALYSIS, ...withoutDemo];
+    });
+    setAnalysis(DEMO_ANALYSIS);
+  }
+
   function resetCardSession() {
     setCurrentCardIndex(0);
     setIsAnswerVisible(false);
@@ -203,6 +314,13 @@ export default function Home() {
 
   async function deleteAnalysis(id: string) {
     if (!session) return;
+
+    if (id === DEMO_ANALYSIS.id) {
+      setSavedAnalyses((current) => current.filter((item) => item.id !== DEMO_ANALYSIS.id));
+      setAnalysis((selected) => (selected?.id === DEMO_ANALYSIS.id ? null : selected));
+      setMessage("Demo-Analyse entfernt.");
+      return;
+    }
 
     const confirmed = window.confirm("Diese Analyse wirklich loeschen?");
     if (!confirmed) return;
@@ -227,7 +345,6 @@ export default function Home() {
 
     setSavedAnalyses((current) => {
       const next = current.filter((item) => item.id !== id);
-      setUsedThisMonth(countThisMonth(next));
       setAnalysis((selected) => {
         if (selected?.id !== id) return selected;
         return next[0] || null;
@@ -243,32 +360,54 @@ export default function Home() {
           <div className="brand">Study AI</div>
           <p className="muted">PDFs in Zusammenfassungen, Fragen und Lernkarten verwandeln.</p>
         </div>
-        {session && <button onClick={signOut}>Ausloggen</button>}
+        <div className="topbar-actions">
+          <a className="text-link" href={getFeedbackHref()}>
+            Feedback geben
+          </a>
+          {session && <button onClick={signOut}>Ausloggen</button>}
+        </div>
       </div>
 
       {!session ? (
-        <section className="panel stack">
-          <h1>Einloggen</h1>
-          <p className="muted">Erstelle einen Account oder logge dich ein.</p>
-          <div className="stack">
-            <input
-              type="email"
-              placeholder="E-Mail"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Passwort"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-            <div className="actions">
-              <button onClick={signIn}>Einloggen</button>
-              <button onClick={signUp}>Registrieren</button>
+        <section className="login-layout">
+          <div className="login-copy">
+            <p className="eyebrow">Lernmaterial aus PDFs</p>
+            <h1>Aus Skripten werden Zusammenfassungen, Fragen und Lernkarten.</h1>
+            <p className="muted">
+              Lade ein PDF hoch, erhalte strukturiertes Lernmaterial und uebe direkt mit Karten.
+            </p>
+            <div className="feature-list">
+              <span>PDF analysieren</span>
+              <span>Takeaways speichern</span>
+              <span>Lernkarten ueben</span>
             </div>
           </div>
-          {message && <p className="error">{message}</p>}
+
+          <div className="panel stack">
+            <h2>Einloggen</h2>
+            <p className="muted">Erstelle einen Account oder logge dich ein.</p>
+            <div className="stack">
+              <input
+                type="email"
+                placeholder="E-Mail"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="Passwort"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <div className="actions">
+                <button onClick={signIn}>Einloggen</button>
+                <button className="secondary-button" onClick={signUp}>
+                  Registrieren
+                </button>
+              </div>
+            </div>
+            {message && <p className="notice">{message}</p>}
+          </div>
         </section>
       ) : (
         <div className="dashboard">
@@ -299,15 +438,23 @@ export default function Home() {
                 <input
                   type="file"
                   accept="application/pdf"
-                  onChange={(event) => setFile(event.target.files?.[0] || null)}
+                  onChange={(event) => handleFileChange(event.target.files?.[0] || null)}
                 />
+                <p className="muted">Nur PDF-Dateien bis {MAX_PDF_SIZE_LABEL}.</p>
                 <button disabled={!file || loading || remainingAnalyses === 0} onClick={analyzePdf}>
                   {loading ? "Analyse laeuft..." : "PDF analysieren"}
+                </button>
+                <button className="secondary-button" onClick={loadDemoAnalysis} type="button">
+                  Demo-Analyse laden
                 </button>
                 {remainingAnalyses === 0 && (
                   <p className="muted">Das kostenlose Monatslimit ist erreicht.</p>
                 )}
-                {message && <p className="error">{message}</p>}
+                {message && <p className="notice">{message}</p>}
+                <div className="privacy-note">
+                  <strong>Datenschutz-Hinweis</strong>
+                  <p>PDFs werden aktuell nicht dauerhaft gespeichert. Gespeichert werden nur Analyse-Ergebnisse.</p>
+                </div>
               </section>
 
               <section className="panel history">
@@ -364,7 +511,11 @@ export default function Home() {
                       onClick={() => deleteAnalysis(analysis.id as string)}
                       type="button"
                     >
-                      {deletingId === analysis.id ? "Loescht..." : "Loeschen"}
+                      {analysis.id === DEMO_ANALYSIS.id
+                        ? "Demo entfernen"
+                        : deletingId === analysis.id
+                          ? "Loescht..."
+                          : "Loeschen"}
                     </button>
                   )}
                 </div>

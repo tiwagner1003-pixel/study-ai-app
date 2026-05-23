@@ -7,6 +7,8 @@ Eine erste echte Web-App-Version fuer Studenten:
 - PDF mit OpenAI analysieren
 - Ergebnis in Supabase speichern
 - Zusammenfassung, Takeaways, offene Fragen und Lernkarten anzeigen
+- Demo-Analyse ohne OpenAI-Guthaben testen
+- Kostenloses Monatslimit vorbereiten
 
 ## 1. Node.js installieren
 
@@ -51,6 +53,7 @@ OPENAI_API_KEY="..."
 NEXT_PUBLIC_SUPABASE_URL="..."
 NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
 SUPABASE_SERVICE_ROLE_KEY="..."
+NEXT_PUBLIC_FEEDBACK_EMAIL=""
 ```
 
 Supabase-Werte findest du hier:
@@ -123,9 +126,12 @@ OPENAI_API_KEY="..."
 NEXT_PUBLIC_SUPABASE_URL="..."
 NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
 SUPABASE_SERVICE_ROLE_KEY="..."
+NEXT_PUBLIC_FEEDBACK_EMAIL=""
 ```
 
 Die Werte sind dieselben wie in deiner lokalen `.env.local`.
+`NEXT_PUBLIC_FEEDBACK_EMAIL` ist optional. Wenn du eine Mailadresse eintraegst,
+oeffnet der Feedback-Link direkt eine Mail an diese Adresse.
 
 ## 9. Supabase Auth fuer Vercel einstellen
 
@@ -154,6 +160,14 @@ http://localhost:3001/**
 http://localhost:3002/**
 http://localhost:3003/**
 ```
+
+## 10. Wenn sich die Datenbankstruktur aendert
+
+Die Datei `supabase/schema.sql` ist wiederholbar. Du kannst sie im Supabase SQL
+Editor erneut ausfuehren, wenn neue Tabellen oder Policies dazukommen.
+
+Aktuell enthaelt sie auch `usage_events`. Diese Tabelle zaehlt PDF-Analysen
+unabhaengig davon, ob ein Nutzer spaeter eine Analyse loescht.
 
 ## Naechste Ausbaustufen
 

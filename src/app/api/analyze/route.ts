@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { createAdminClient } from "@/lib/supabase";
 
 const FREE_MONTHLY_LIMIT = 3;
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 type AnalysisResult = {
   summary: string;
@@ -51,6 +52,13 @@ function getFriendlyError(error: unknown) {
     };
   }
 
+  if (apiError.status === 401 || apiError.code === "invalid_api_key") {
+    return {
+      message: "Der OpenAI API-Key ist ungueltig oder fehlt.",
+      status: 401,
+    };
+  }
+
   return {
     message: error instanceof Error ? error.message : "Unbekannter Fehler.",
     status: 500,
@@ -76,17 +84,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Login konnte nicht geprueft werden." }, { status: 401 });
     }
 
-    const { count, error: countError } = await supabase
-      .from("analyses")
+    const { count: usageCount, error: usageCountError } = await supabase
+      .from("usage_events")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .gte("created_at", getMonthStart());
 
-    if (countError) {
-      throw new Error(countError.message);
+    const { count: analysisCount, error: analysisCountError } = usageCountError
+      ? await supabase
+          .from("analyses")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", getMonthStart())
+      : { count: usageCount, error: null };
+
+    if (analysisCountError) {
+      throw new Error(analysisCountError.message);
     }
 
-    if ((count || 0) >= FREE_MONTHLY_LIMIT) {
+    const currentUsage = analysisCount || 0;
+
+    if (currentUsage >= FREE_MONTHLY_LIMIT) {
       return NextResponse.json(
         {
           error: `Du hast dein kostenloses Monatslimit von ${FREE_MONTHLY_LIMIT} PDF-Analysen erreicht.`,
@@ -100,6 +118,21 @@ export async function POST(request: NextRequest) {
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Bitte ein PDF hochladen." }, { status: 400 });
+    }
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      return NextResponse.json({ error: "Bitte lade eine PDF-Datei hoch." }, { status: 400 });
+    }
+
+    if (file.size > MAX_PDF_BYTES) {
+      return NextResponse.json(
+        { error: "Das PDF ist zu gross. Bitte lade maximal 10 MB hoch." },
+        { status: 413 },
+      );
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "Der OpenAI API-Key fehlt." }, { status: 500 });
     }
 
     const pdfBytes = Buffer.from(await file.arrayBuffer());
@@ -182,6 +215,12 @@ Erstelle genau 5 Lernkarten.
       throw new Error(flashcardError.message);
     }
 
+    await supabase.from("usage_events").insert({
+      user_id: user.id,
+      analysis_id: analysis.id,
+      event_type: "pdf_analysis",
+    });
+
     return NextResponse.json({
       analysis: {
         id: analysis.id,
@@ -190,7 +229,7 @@ Erstelle genau 5 Lernkarten.
         ...parsed,
       },
       usage: {
-        used: (count || 0) + 1,
+        used: currentUsage + 1,
         limit: FREE_MONTHLY_LIMIT,
       },
     });
