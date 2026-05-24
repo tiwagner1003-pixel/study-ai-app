@@ -1074,10 +1074,16 @@ fieldset {
 }
 
 .answer {
+  animation: slideDown 0.22s ease;
   border-top: 1px solid var(--line);
   display: grid;
   gap: 10px;
   padding-top: 14px;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .card-hint {
@@ -1521,6 +1527,195 @@ fieldset {
 .upload-zone.drag-over {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
+
+/* ── Toast notifications ── */
+.toast-stack {
+  bottom: 28px;
+  display: grid;
+  gap: 8px;
+  left: 50%;
+  max-width: 440px;
+  pointer-events: none;
+  position: fixed;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  z-index: 200;
+}
+
+.toast {
+  align-items: center;
+  animation: toastIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: #111d1a;
+  border-radius: 8px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.22);
+  color: #ffffff;
+  display: flex;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 12px;
+  padding: 14px 18px;
+  pointer-events: auto;
+}
+
+.toast::before {
+  background: var(--accent);
+  border-radius: 99px;
+  content: "";
+  flex: 0 0 4px;
+  height: 18px;
+}
+
+.toast-error {
+  background: #2d0b12;
+}
+
+.toast-error::before {
+  background: var(--danger);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Entry animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up   { animation: fadeUp 0.38s ease both; }
+.fade-up-1 { animation: fadeUp 0.38s 0.06s ease both; }
+.fade-up-2 { animation: fadeUp 0.38s 0.12s ease both; }
+.fade-up-3 { animation: fadeUp 0.38s 0.18s ease both; }
+
+/* ── Knowledge type tabs ── */
+.type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.type-tab {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 4px 14px;
+  transition: background 140ms, border-color 140ms, color 140ms;
+}
+
+.type-tab:hover {
+  background: var(--accent-soft);
+  border-color: #9bc9c2;
+  color: var(--accent-dark);
+  transform: none;
+}
+
+.type-tab.active {
+  background: var(--accent-soft);
+  border-color: #79c8bd;
+  color: var(--accent-dark);
+}
+
+/* ── Copy button ── */
+.output-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 30px;
+  padding: 4px 12px;
+  transition: background 140ms, border-color 140ms, color 140ms;
+}
+
+.copy-btn:hover {
+  background: var(--accent-soft);
+  border-color: #79c8bd;
+  color: var(--accent-dark);
+  transform: none;
+}
+
+.copy-btn.copied {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+/* ── Loading shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  animation: shimmer 1.5s ease infinite;
+  background: linear-gradient(90deg, #e8edf2 25%, #f3f6f9 50%, #e8edf2 75%);
+  background-size: 1200px 100%;
+  border-radius: 6px;
+  min-height: 14px;
+}
+
+/* ── Analyse loading state ── */
+.analyze-loading {
+  display: grid;
+  gap: 14px;
+  padding: 26px;
+}
+
+.analyze-loading-bar {
+  display: grid;
+  gap: 8px;
+}
+
+/* ── Stat counter improved ── */
+.stat strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Improved panel elevation on hover ── */
+.cockpit-card {
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.cockpit-card:hover {
+  box-shadow: 0 6px 24px rgba(25, 38, 52, 0.09);
+  transform: translateY(-1px);
+}
+
+/* ── Character counter ── */
+.char-counter {
+  color: var(--muted);
+  font-size: 12px;
+  margin: -6px 0 0;
+  text-align: right;
+}
+
+.char-counter.warn {
+  color: var(--danger);
+}
+
+/* ── Knowledge list expanded view ── */
+.knowledge-list article {
+  transition: box-shadow 160ms ease;
+}
+
+.knowledge-list article:hover {
+  box-shadow: 0 4px 16px rgba(25, 38, 52, 0.08);
 }
 
 @media (max-width: 820px) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
@@ -81,6 +81,8 @@ type SavedAnalysisRow = {
     | null;
   flashcards: Flashcard[];
 };
+
+type Toast = { id: number; text: string; ok: boolean };
 
 const FREE_MONTHLY_LIMIT = 3;
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
@@ -287,7 +289,6 @@ export default function Home() {
   const [runningResearch, setRunningResearch] = useState(false);
   const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSection>("lernen");
   const [usedThisMonth, setUsedThisMonth] = useState(0);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -297,9 +298,12 @@ export default function Home() {
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackWouldUse, setFeedbackWouldUse] = useState("maybe");
   const [feedbackMessage, setFeedbackMessage] = useState("");
-  const [feedbackStatus, setFeedbackStatus] = useState("");
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [knowledgeFilter, setKnowledgeFilter] = useState("all");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const toastRef = useRef(0);
 
   const remainingAnalyses = Math.max(FREE_MONTHLY_LIMIT - usedThisMonth, 0);
   const activeCard = analysis?.flashcards[currentCardIndex];
@@ -333,6 +337,9 @@ export default function Home() {
       ];
   const activeSection = WORKSPACE_SECTIONS.find((section) => section.id === activeWorkspaceSection) || WORKSPACE_SECTIONS[0];
   const hasWorkspaceRail = activeWorkspaceSection === "lernen" || activeWorkspaceSection === "bibliothek";
+  const filteredKnowledge = knowledgeFilter === "all"
+    ? knowledgeItems
+    : knowledgeItems.filter((item) => item.item_type === knowledgeFilter);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -406,6 +413,22 @@ export default function Home() {
     return () => window.removeEventListener("keydown", onKey);
   }, [activeWorkspaceSection, analysis, totalCards, currentCardIndex, isAnswerVisible]);
 
+  function notify(text: string, ok = true) {
+    const id = ++toastRef.current;
+    setToasts((prev) => [...prev, { id, text, ok }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4200);
+  }
+
+  async function copyText(text: string, id: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2200);
+    } catch {
+      notify("Kopieren fehlgeschlagen.", false);
+    }
+  }
+
   function openWorkspaceSection(section: WorkspaceSection) {
     setActiveWorkspaceSection(section);
     window.history.replaceState(null, "", `#${section}`);
@@ -418,7 +441,7 @@ export default function Home() {
       .order("created_at", { ascending: true });
 
     if (error) {
-      setMessage(error.message);
+      notify(error.message, false);
       return;
     }
 
@@ -443,7 +466,7 @@ export default function Home() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      setMessage(error.message);
+      notify(error.message, false);
       return;
     }
 
@@ -492,7 +515,7 @@ export default function Home() {
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error || "Wissenssystem konnte nicht geladen werden.");
+      notify(data.error || "Wissenssystem konnte nicht geladen werden.", false);
       return;
     }
 
@@ -511,7 +534,7 @@ export default function Home() {
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error || "Agent-Verlauf konnte nicht geladen werden.");
+      notify(data.error || "Agent-Verlauf konnte nicht geladen werden.", false);
       return;
     }
 
@@ -530,7 +553,7 @@ export default function Home() {
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error || "Research-Verlauf konnte nicht geladen werden.");
+      notify(data.error || "Research-Verlauf konnte nicht geladen werden.", false);
       return;
     }
 
@@ -538,30 +561,28 @@ export default function Home() {
   }
 
   async function signUp() {
-    setMessage("");
     if (!email || !password) {
-      setMessage("Bitte E-Mail und Passwort eintragen.");
+      notify("Bitte E-Mail und Passwort eintragen.", false);
       return;
     }
 
     if (password.length < 6) {
-      setMessage("Das Passwort sollte mindestens 6 Zeichen haben.");
+      notify("Das Passwort muss mindestens 6 Zeichen haben.", false);
       return;
     }
 
     const { error } = await supabase.auth.signUp({ email, password });
-    setMessage(error ? error.message : "Account erstellt. Falls Supabase eine Mail sendet, bestätige sie kurz.");
+    notify(error ? error.message : "Account erstellt! Bestätige ggf. die E-Mail.", !error);
   }
 
   async function signIn() {
-    setMessage("");
     if (!email || !password) {
-      setMessage("Bitte E-Mail und Passwort eintragen.");
+      notify("Bitte E-Mail und Passwort eintragen.", false);
       return;
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setMessage(error.message);
+    if (error) notify(error.message, false);
   }
 
   async function signOut() {
@@ -580,10 +601,8 @@ export default function Home() {
   async function createSubject() {
     if (!session) return;
 
-    setMessage("");
-
     if (newSubjectName.trim().length < 2) {
-      setMessage("Bitte gib einen Fachnamen ein.");
+      notify("Bitte gib einen Fachnamen ein.", false);
       return;
     }
 
@@ -605,7 +624,7 @@ export default function Home() {
     setCreatingSubject(false);
 
     if (!response.ok) {
-      setMessage(data.error || "Das Fach konnte nicht erstellt werden.");
+      notify(data.error || "Das Fach konnte nicht erstellt werden.", false);
       return;
     }
 
@@ -613,7 +632,7 @@ export default function Home() {
     setUploadSubjectId(data.subject.id);
     setSelectedSubjectId(data.subject.id);
     setNewSubjectName("");
-    setMessage("Fach erstellt.");
+    notify("Fach erstellt.");
   }
 
   async function saveKnowledgeItem(source?: "analysis") {
@@ -634,10 +653,8 @@ export default function Home() {
           ].join("\n")
         : knowledgeContent.trim();
 
-    setMessage("");
-
     if (title.length < 2 || content.length < 10) {
-      setMessage("Bitte ergänze Titel und Inhalt für den Wissenseintrag.");
+      notify("Bitte ergänze Titel und Inhalt für den Wissenseintrag.", false);
       return;
     }
 
@@ -664,7 +681,7 @@ export default function Home() {
     setSavingKnowledge(false);
 
     if (!response.ok) {
-      setMessage(data.error || "Wissenseintrag konnte nicht gespeichert werden.");
+      notify(data.error || "Wissenseintrag konnte nicht gespeichert werden.", false);
       return;
     }
 
@@ -675,16 +692,14 @@ export default function Home() {
       setKnowledgeTags("");
       setKnowledgeRelated("");
     }
-    setMessage("Wissenseintrag gespeichert.");
+    notify("Wissenseintrag gespeichert.");
   }
 
   async function runWorkflowAgent() {
     if (!session) return;
 
-    setMessage("");
-
     if (workflowInput.trim().length < 10) {
-      setMessage("Bitte beschreibe kurz, was der Agent tun soll.");
+      notify("Bitte beschreibe kurz, was der Agent tun soll.", false);
       return;
     }
 
@@ -707,7 +722,7 @@ export default function Home() {
     setRunningWorkflow(false);
 
     if (!response.ok) {
-      setMessage(data.error || "Workflow-Agent konnte nicht gestartet werden.");
+      notify(data.error || "Workflow-Agent konnte nicht gestartet werden.", false);
       return;
     }
 
@@ -716,17 +731,16 @@ export default function Home() {
   }
 
   function handleResearchFileChange(files: FileList | null) {
-    setMessage("");
     const nextFiles = Array.from(files || []).slice(0, 2);
 
     for (const nextFile of nextFiles) {
       if (nextFile.type !== "application/pdf" && !nextFile.name.toLowerCase().endsWith(".pdf")) {
-        setMessage("Bitte lade nur PDF-Dateien hoch.");
+        notify("Bitte lade nur PDF-Dateien hoch.", false);
         return;
       }
 
       if (nextFile.size > MAX_PDF_BYTES) {
-        setMessage(`Ein PDF ist zu groß. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} pro Datei hoch.`);
+        notify(`Ein PDF ist zu groß. Maximal ${MAX_PDF_SIZE_LABEL} pro Datei.`, false);
         return;
       }
     }
@@ -737,10 +751,8 @@ export default function Home() {
   async function runResearchAssistant() {
     if (!session) return;
 
-    setMessage("");
-
     if (researchBrief.trim().length < 10 && researchFiles.length === 0 && !analysis) {
-      setMessage("Bitte gib einen Research-Auftrag ein oder füge Kontext hinzu.");
+      notify("Bitte gib einen Research-Auftrag ein oder füge Kontext hinzu.", false);
       return;
     }
 
@@ -766,7 +778,7 @@ export default function Home() {
     setRunningResearch(false);
 
     if (!response.ok) {
-      setMessage(data.error || "Research Assistant konnte keinen Report erstellen.");
+      notify(data.error || "Research Assistant konnte keinen Report erstellen.", false);
       return;
     }
 
@@ -779,17 +791,16 @@ export default function Home() {
     if (!file || !session) return;
 
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setMessage("Bitte lade eine PDF-Datei hoch.");
+      notify("Bitte lade eine PDF-Datei hoch.", false);
       return;
     }
 
     if (file.size > MAX_PDF_BYTES) {
-      setMessage(`Das PDF ist zu groß. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
+      notify(`Das PDF ist zu groß. Maximal ${MAX_PDF_SIZE_LABEL}.`, false);
       return;
     }
 
     setLoading(true);
-    setMessage("");
     setAnalysis(null);
 
     const formData = new FormData();
@@ -810,7 +821,7 @@ export default function Home() {
     setLoading(false);
 
     if (!response.ok) {
-      setMessage(data.error || "Die Analyse ist fehlgeschlagen.");
+      notify(data.error || "Die Analyse ist fehlgeschlagen.", false);
       return;
     }
 
@@ -821,18 +832,17 @@ export default function Home() {
   }
 
   function handleFileChange(nextFile: File | null) {
-    setMessage("");
     setFile(null);
 
     if (!nextFile) return;
 
     if (nextFile.type !== "application/pdf" && !nextFile.name.toLowerCase().endsWith(".pdf")) {
-      setMessage("Bitte lade eine PDF-Datei hoch.");
+      notify("Bitte lade eine PDF-Datei hoch.", false);
       return;
     }
 
     if (nextFile.size > MAX_PDF_BYTES) {
-      setMessage(`Das PDF ist zu groß. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} hoch.`);
+      notify(`Das PDF ist zu groß. Maximal ${MAX_PDF_SIZE_LABEL}.`, false);
       return;
     }
 
@@ -840,7 +850,7 @@ export default function Home() {
   }
 
   function loadDemoAnalysis() {
-    setMessage("Demo-Analyse geladen. Sie wird nicht gespeichert und zählt nicht ins Monatslimit.");
+    notify("Demo-Analyse geladen. Kein Speichern, kein Monatslimit.");
     setSavedAnalyses((current) => {
       const withoutDemo = current.filter((item) => item.id !== DEMO_ANALYSIS.id);
       return [DEMO_ANALYSIS, ...withoutDemo];
@@ -875,12 +885,11 @@ export default function Home() {
     if (id === DEMO_ANALYSIS.id) {
       setSavedAnalyses((current) => current.filter((item) => item.id !== DEMO_ANALYSIS.id));
       setAnalysis((selected) => (selected?.id === DEMO_ANALYSIS.id ? null : selected));
-      setMessage("Demo-Analyse entfernt.");
+      notify("Demo-Analyse entfernt.");
       return;
     }
 
     setDeletingId(id);
-    setMessage("");
 
     const response = await fetch(`/api/analyses/${id}`, {
       method: "DELETE",
@@ -893,7 +902,7 @@ export default function Home() {
     setDeletingId(null);
 
     if (!response.ok) {
-      setMessage(data.error || "Die Analyse konnte nicht gelöscht werden.");
+      notify(data.error || "Die Analyse konnte nicht gelöscht werden.", false);
       return;
     }
 
@@ -910,10 +919,8 @@ export default function Home() {
   async function submitFeedback() {
     if (!session) return;
 
-    setFeedbackStatus("");
-
     if (feedbackMessage.trim().length < 10) {
-      setFeedbackStatus("Bitte schreibe mindestens 10 Zeichen Feedback.");
+      notify("Bitte schreibe mindestens 10 Zeichen Feedback.", false);
       return;
     }
 
@@ -936,12 +943,12 @@ export default function Home() {
     setSubmittingFeedback(false);
 
     if (!response.ok) {
-      setFeedbackStatus(data.error || "Feedback konnte nicht gespeichert werden.");
+      notify(data.error || "Feedback konnte nicht gespeichert werden.", false);
       return;
     }
 
     setFeedbackMessage("");
-    setFeedbackStatus("Danke, dein Feedback wurde gespeichert.");
+    notify("Danke für dein Feedback!");
   }
 
   return (
@@ -1049,7 +1056,6 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-              {message && <p className="notice">{message}</p>}
               <div className="auth-footnote">
                 <span>3 freie Analysen pro Monat</span>
                 <span>PDFs werden nicht dauerhaft gespeichert</span>
@@ -1189,12 +1195,12 @@ export default function Home() {
           </section>
 
           <section className="study-cockpit" hidden={activeWorkspaceSection !== "lernen"}>
-            <article className="cockpit-card primary">
+            <article className="cockpit-card primary fade-up">
               <span>Aktueller Fokus</span>
               <strong>{currentLearningFocus}</strong>
-              <p>{analysis ? `${selectedSubjectName} | ${totalCards} Lernkarten bereit` : "Lade ein Dokument hoch oder öffne die Demo."}</p>
+              <p>{analysis ? `${selectedSubjectName} · ${totalCards} Lernkarten bereit` : "Lade ein Dokument hoch oder öffne die Demo."}</p>
             </article>
-            <article className="cockpit-card">
+            <article className="cockpit-card fade-up-1">
               <span>Heute sinnvoll</span>
               <ul>
                 {nextStudyActions.slice(0, 3).map((item) => (
@@ -1202,7 +1208,7 @@ export default function Home() {
                 ))}
               </ul>
             </article>
-            <article className="cockpit-card">
+            <article className="cockpit-card fade-up-2">
               <span>Workspace</span>
               <div className="cockpit-metrics">
                 <div>
@@ -1211,7 +1217,7 @@ export default function Home() {
                 </div>
                 <div>
                   <strong>{agentRuns.length}</strong>
-                  <small>Agent-Läufe</small>
+                  <small>Aufgaben</small>
                 </div>
                 <div>
                   <strong>{researchReports.length}</strong>
@@ -1219,7 +1225,7 @@ export default function Home() {
                 </div>
               </div>
             </article>
-            <article className="cockpit-card">
+            <article className="cockpit-card fade-up-3">
               <span>Nächster Schritt</span>
               <p>
                 {latestAgentRun
@@ -1274,7 +1280,6 @@ export default function Home() {
                 {remainingAnalyses === 0 && (
                   <p className="muted">Das kostenlose Monatslimit ist erreicht.</p>
                 )}
-                {message && <p className="notice">{message}</p>}
                 <div className="privacy-note">
                   <strong>Datenschutz-Hinweis</strong>
                   <p>PDFs werden aktuell nicht dauerhaft gespeichert. Gespeichert werden nur Analyse-Ergebnisse.</p>
@@ -1394,22 +1399,56 @@ export default function Home() {
                   </div>
 
                   <div className="knowledge-list">
-                    {knowledgeItems.length === 0 ? (
+                    {knowledgeItems.length > 0 && (
+                      <div className="type-tabs">
+                        <button
+                          className={`type-tab ${knowledgeFilter === "all" ? "active" : ""}`}
+                          onClick={() => setKnowledgeFilter("all")}
+                          type="button"
+                        >
+                          Alle ({knowledgeItems.length})
+                        </button>
+                        {KNOWLEDGE_TYPES.map((type) => {
+                          const count = knowledgeItems.filter((i) => i.item_type === type.value).length;
+                          if (count === 0) return null;
+                          return (
+                            <button
+                              className={`type-tab ${knowledgeFilter === type.value ? "active" : ""}`}
+                              key={type.value}
+                              onClick={() => setKnowledgeFilter(type.value)}
+                              type="button"
+                            >
+                              {type.label} ({count})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {filteredKnowledge.length === 0 ? (
                       <div className="empty-state">
                         <strong>Noch kein Lernwissen gespeichert</strong>
                         <p>Übernimm eine Analyse oder lege ein wichtiges Konzept manuell an.</p>
                       </div>
                     ) : (
-                      knowledgeItems.map((item) => {
+                      filteredKnowledge.map((item) => {
                         const subject = getKnowledgeSubject(item.subjects || null);
 
                         return (
                           <article key={item.id}>
-                            <span>{getTypeLabel(KNOWLEDGE_TYPES, item.item_type)}</span>
+                            <div className="output-header">
+                              <span>{getTypeLabel(KNOWLEDGE_TYPES, item.item_type)}</span>
+                              <button
+                                className={`copy-btn ${copiedId === item.id ? "copied" : ""}`}
+                                onClick={() => copyText(`${item.title}\n\n${item.content}`, item.id)}
+                                type="button"
+                              >
+                                {copiedId === item.id ? "Kopiert!" : "Kopieren"}
+                              </button>
+                            </div>
                             <strong>{item.title}</strong>
                             <p>{item.content}</p>
                             {item.tags.length > 0 && (
-                              <small>{item.tags.slice(0, 3).join(" | ")}</small>
+                              <small>{item.tags.slice(0, 3).join(" · ")}</small>
                             )}
                             {subject && (
                               <small className="subject-badge">
@@ -1650,7 +1689,16 @@ export default function Home() {
                       </div>
                     ) : (
                       <article className="run-card">
-                        <span>{getTypeLabel(WORKFLOW_TYPES, agentRuns[0].task_type)}</span>
+                        <div className="output-header">
+                          <span>{getTypeLabel(WORKFLOW_TYPES, agentRuns[0].task_type)}</span>
+                          <button
+                            className={`copy-btn ${copiedId === "agent-output" ? "copied" : ""}`}
+                            onClick={() => copyText(agentRuns[0].output, "agent-output")}
+                            type="button"
+                          >
+                            {copiedId === "agent-output" ? "Kopiert!" : "Kopieren"}
+                          </button>
+                        </div>
                         <pre>{agentRuns[0].output}</pre>
                         {agentRuns[0].next_actions.length > 0 && (
                           <ul className="list">
@@ -1723,7 +1771,16 @@ export default function Home() {
                       </div>
                     ) : (
                       <article className="research-card">
-                        <span>{getTypeLabel(RESEARCH_MODES, researchReports[0].mode)}</span>
+                        <div className="output-header">
+                          <span>{getTypeLabel(RESEARCH_MODES, researchReports[0].mode)}</span>
+                          <button
+                            className={`copy-btn ${copiedId === "research-output" ? "copied" : ""}`}
+                            onClick={() => copyText(`${researchReports[0].title}\n\n${researchReports[0].executive_summary}`, "research-output")}
+                            type="button"
+                          >
+                            {copiedId === "research-output" ? "Kopiert!" : "Kopieren"}
+                          </button>
+                        </div>
                         <h3>{researchReports[0].title}</h3>
                         <p>{researchReports[0].executive_summary}</p>
                         {researchReports[0].kpis.length > 0 && (
@@ -1806,15 +1863,25 @@ export default function Home() {
                 placeholder="Zum Beispiel: Lernkarten sind hilfreich, aber ich brauche Export nach Anki..."
                 value={feedbackMessage}
               />
+              <p className={`char-counter ${feedbackMessage.length > 1100 ? "warn" : ""}`}>
+                {feedbackMessage.length}/1200
+              </p>
             </label>
 
             <button disabled={submittingFeedback} onClick={submitFeedback} type="button">
               {submittingFeedback ? "Speichert..." : "Feedback speichern"}
             </button>
-            {feedbackStatus && <p className="notice">{feedbackStatus}</p>}
           </section>
         </div>
       )}
+
+      <div className="toast-stack" aria-live="polite">
+        {toasts.map((t) => (
+          <div key={t.id} className={`toast${t.ok ? "" : " toast-error"}`}>
+            {t.text}
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
