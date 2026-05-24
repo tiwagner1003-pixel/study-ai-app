@@ -532,88 +532,171 @@ export default function Home() {
       </div>
 
       {!session ? (
-        <section className="login-layout">
-          <div className="login-copy">
-            <p className="eyebrow">AI Study Platform</p>
-            <h1>Aus PDFs wird ein persönlicher Lernraum.</h1>
-            <p className="muted">
-              Study AI verwandelt Skripte, Paper und Vorlesungsfolien in klare Zusammenfassungen,
-              Takeaways, offene Fragen und Lernkarten.
-            </p>
-            <div className="feature-list">
-              <span>PDFs verstehen</span>
-              <span>Wissen strukturieren</span>
-              <span>Lernkarten üben</span>
-            </div>
+        <div className="landing-page">
+          <section className="login-layout landing-hero">
+            <div className="login-copy">
+              <p className="eyebrow">AI Study Platform</p>
+              <h1>Mach aus chaotischen PDFs einen klaren Lernplan.</h1>
+              <p className="muted">
+                Vor der Prüfung liegen Skripte, Paper und Folien oft ungeordnet herum. Study AI
+                verwandelt sie in Zusammenfassungen, Takeaways, offene Fragen und Lernkarten.
+              </p>
 
-            <div className="hero-product" aria-label="Produktvorschau">
-              <div className="hero-product-top">
-                <span>Study AI Workspace</span>
-                <strong>Live-Vorschau</strong>
+              <div className="hero-actions">
+                <a className="button-link" href="#konto">
+                  Kostenlos starten
+                </a>
+                <a className="text-link" href="#ablauf">
+                  So funktioniert es
+                </a>
               </div>
-              <div className="hero-product-grid">
-                <div className="preview-upload">
-                  <span className="preview-icon">PDF</span>
-                  <div>
-                    <strong>Investition_Skript.pdf</strong>
-                    <p>Analyse bereit</p>
+
+              <div className="feature-list">
+                <span>PDFs verstehen</span>
+                <span>Wissen strukturieren</span>
+                <span>Lernkarten üben</span>
+              </div>
+
+              <div className="hero-product" aria-label="Produktvorschau">
+                <div className="hero-product-top">
+                  <span>Study AI Workspace</span>
+                  <strong>Live-Vorschau</strong>
+                </div>
+                <div className="hero-product-grid">
+                  <div className="preview-upload">
+                    <span className="preview-icon">PDF</span>
+                    <div>
+                      <strong>Investition_Skript.pdf</strong>
+                      <p>Analyse bereit</p>
+                    </div>
+                  </div>
+                  <div className="preview-score">
+                    <span>5</span>
+                    <p>Lernkarten</p>
                   </div>
                 </div>
-                <div className="preview-score">
-                  <span>5</span>
-                  <p>Lernkarten</p>
+                <div className="preview-content">
+                  <p>Zusammenfassung</p>
+                  <strong>Kapitalwert, Risiko und Zahlungsreihe werden zu einem klaren Lernpfad.</strong>
                 </div>
-              </div>
-              <div className="preview-content">
-                <p>Zusammenfassung</p>
-                <strong>Kapitalwert, Risiko und Zahlungsreihe werden zu einem klaren Lernpfad.</strong>
-              </div>
-              <div className="preview-columns">
-                <div>
-                  <span>Takeaway</span>
-                  <p>Entscheidungen brauchen Vergleichbarkeit.</p>
-                </div>
-                <div>
-                  <span>Frage</span>
-                  <p>Wann ist der Kapitalwert positiv?</p>
+                <div className="preview-columns">
+                  <div>
+                    <span>Takeaway</span>
+                    <p>Entscheidungen brauchen Vergleichbarkeit.</p>
+                  </div>
+                  <div>
+                    <span>Frage</span>
+                    <p>Wann ist der Kapitalwert positiv?</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="panel auth-panel stack">
-            <div className="auth-heading">
-              <p className="eyebrow">Dein Workspace</p>
-              <h2>Einloggen</h2>
-              <p className="muted">Erstelle einen Account oder logge dich ein.</p>
-            </div>
-            <div className="stack">
-              <input
-                type="email"
-                placeholder="E-Mail"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-              <input
-                type="password"
-                placeholder="Passwort"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              <div className="actions">
-                <button onClick={signIn}>Einloggen</button>
-                <button className="secondary-button" onClick={signUp}>
-                  Registrieren
-                </button>
+            <div className="panel auth-panel stack" id="konto">
+              <div className="auth-heading">
+                <p className="eyebrow">Dein Workspace</p>
+                <h2>Account erstellen</h2>
+                <p className="muted">Erstelle einen Account oder logge dich ein.</p>
+              </div>
+              <div className="stack">
+                <input
+                  type="email"
+                  placeholder="E-Mail"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+                <input
+                  type="password"
+                  placeholder="Passwort"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                <div className="actions">
+                  <button onClick={signUp}>Registrieren</button>
+                  <button className="secondary-button" onClick={signIn}>
+                    Einloggen
+                  </button>
+                </div>
+              </div>
+              {message && <p className="notice">{message}</p>}
+              <div className="auth-footnote">
+                <span>3 freie Analysen pro Monat</span>
+                <span>PDFs werden nicht dauerhaft gespeichert</span>
               </div>
             </div>
-            {message && <p className="notice">{message}</p>}
-            <div className="auth-footnote">
-              <span>3 freie Analysen pro Monat</span>
-              <span>PDFs werden nicht dauerhaft gespeichert</span>
+          </section>
+
+          <section className="story-section">
+            <div className="story-copy">
+              <p className="eyebrow">Warum Study AI?</p>
+              <h2>Das Problem ist nicht das Lernen. Es ist der Start.</h2>
+              <p className="muted">
+                Viele Studierende verlieren Zeit damit, Unterlagen zu sortieren, Wichtiges zu erkennen
+                und daraus gute Wiederholungsfragen zu bauen. Study AI nimmt dir diesen ersten schweren
+                Schritt ab, damit du schneller ins aktive Lernen kommst.
+              </p>
             </div>
-          </div>
-        </section>
+            <div className="story-grid">
+              <article>
+                <span>01</span>
+                <h3>Unterlagen sammeln</h3>
+                <p>Skripte, Paper und Folien landen an einem Ort und werden nach Fächern geordnet.</p>
+              </article>
+              <article>
+                <span>02</span>
+                <h3>Inhalte verstehen</h3>
+                <p>Aus langen PDFs entstehen kurze Zusammenfassungen, Takeaways und offene Fragen.</p>
+              </article>
+              <article>
+                <span>03</span>
+                <h3>Gezielt wiederholen</h3>
+                <p>Lernkarten helfen dir, Wissen aktiv abzufragen statt nur passiv zu lesen.</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="flow-section" id="ablauf">
+            <div>
+              <p className="eyebrow">Der Ablauf</p>
+              <h2>Von der PDF zur Lernroutine in wenigen Minuten.</h2>
+            </div>
+            <div className="flow-steps">
+              <div>
+                <strong>Hochladen</strong>
+                <p>Du wählst eine PDF aus und ordnest sie optional einem Fach zu.</p>
+              </div>
+              <div>
+                <strong>Analysieren</strong>
+                <p>Study AI erzeugt Zusammenfassung, Takeaways, offene Fragen und Lernkarten.</p>
+              </div>
+              <div>
+                <strong>Wiederholen</strong>
+                <p>Du speicherst die Analyse und lernst später direkt in deinem Workspace weiter.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="promise-section">
+            <div>
+              <p className="eyebrow">Was dein Account bringt</p>
+              <h2>Ein Workspace, der mit deinem Semester wächst.</h2>
+            </div>
+            <div className="promise-list">
+              <p>Speichere deine Analysen dauerhaft als Bibliothek.</p>
+              <p>Sortiere Inhalte nach Fächern und Modulen.</p>
+              <p>Greife wieder auf Lernkarten, Fragen und Zusammenfassungen zu.</p>
+              <p>Teste die ersten Analysen kostenlos und gib Feedback für die nächsten Features.</p>
+            </div>
+          </section>
+
+          <section className="final-cta">
+            <p className="eyebrow">Bereit für den ersten Lernpfad?</p>
+            <h2>Starte mit einer PDF, die du sowieso lernen musst.</h2>
+            <a className="button-link" href="#konto">
+              Account erstellen
+            </a>
+          </section>
+        </div>
       ) : (
         <div className="dashboard">
           <section className="workspace-hero">
