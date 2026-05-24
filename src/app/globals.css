@@ -25,7 +25,14 @@
 
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    linear-gradient(rgba(22, 121, 111, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(47, 111, 187, 0.045) 1px, transparent 1px),
+    var(--background);
+  background-size:
+    42px 42px,
+    42px 42px,
+    auto;
   color: var(--text);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -118,6 +125,7 @@ fieldset {
   align-items: center;
   background: var(--accent);
   border-radius: 6px;
+  box-shadow: 0 0 0 4px rgba(22, 121, 111, 0.11);
   color: #ffffff;
   display: inline-flex;
   font-size: 16px;
@@ -240,17 +248,72 @@ fieldset {
 
 .dashboard {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
-.dashboard-grid {
+.workspace-hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 35%),
+    #102520;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  color: #ffffff;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.9fr);
+  overflow: hidden;
+  padding: 26px;
+  position: relative;
+}
+
+.workspace-hero::after {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08) 0,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 1px,
+    transparent 54px
+  );
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.workspace-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.workspace-hero h1 {
+  font-size: 36px;
+  line-height: 1.08;
+  margin: 8px 0 10px;
+  max-width: 680px;
+}
+
+.workspace-hero .muted {
+  color: #bfd6d2;
+}
+
+.workspace-hero .eyebrow {
+  color: #7de0d2;
+}
+
+.workspace-grid {
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
 }
 
-.sidebar {
+.control-rail {
   align-content: start;
+  display: grid;
+  gap: 18px;
+}
+
+.workspace-main {
   display: grid;
   gap: 18px;
 }
@@ -336,8 +399,8 @@ fieldset {
 }
 
 .stat {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
   display: grid;
   gap: 8px;
@@ -345,26 +408,27 @@ fieldset {
 }
 
 .stat:nth-child(2) {
-  background: var(--warm-soft);
-  border-color: #f4d19b;
+  background: rgba(255, 244, 223, 0.13);
+  border-color: rgba(244, 209, 155, 0.28);
 }
 
 .stat:nth-child(3) {
-  background: var(--info-soft);
-  border-color: #c9dcef;
+  background: rgba(234, 242, 251, 0.12);
+  border-color: rgba(201, 220, 239, 0.24);
 }
 
 .stat:nth-child(4) {
-  background: var(--accent-soft);
-  border-color: #b7dfd8;
+  background: rgba(232, 246, 243, 0.13);
+  border-color: rgba(183, 223, 216, 0.28);
 }
 
 .stat span {
-  color: var(--muted);
+  color: #bfd6d2;
   font-size: 14px;
 }
 
 .stat strong {
+  color: #ffffff;
   font-size: 28px;
 }
 
@@ -593,6 +657,15 @@ fieldset {
   gap: 14px;
 }
 
+.feedback-wide {
+  align-items: end;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(180px, 0.55fr) minmax(320px, 1.2fr) auto;
+}
+
+.feedback-wide textarea {
+  min-height: 92px;
+}
+
 .feedback-card h2 {
   font-size: 18px;
   margin: 0 0 4px;
@@ -606,6 +679,10 @@ fieldset {
 .history-list {
   display: grid;
   gap: 8px;
+}
+
+.workspace-main .history-list {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .history-item {
@@ -631,6 +708,11 @@ fieldset {
 
 .history-item small {
   color: var(--muted);
+}
+
+.workspace-main .history-item {
+  align-content: start;
+  min-height: 112px;
 }
 
 .detail-header {
@@ -740,8 +822,22 @@ fieldset {
     display: none;
   }
 
-  .dashboard-grid,
+  .workspace-hero,
+  .workspace-grid,
   .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-hero {
+    padding: 22px;
+  }
+
+  .workspace-hero h1 {
+    font-size: 28px;
+  }
+
+  .workspace-main .history-list,
+  .feedback-wide {
     grid-template-columns: 1fr;
   }
 

@@ -588,29 +588,38 @@ export default function Home() {
         </section>
       ) : (
         <div className="dashboard">
-          <section className="stats">
-            <div className="stat">
-              <span>Gespeicherte Analysen</span>
-              <strong>{savedAnalyses.length}</strong>
+          <section className="workspace-hero">
+            <div>
+              <p className="eyebrow">AI Study Workspace</p>
+              <h1>Lernen, sortieren und wiederholen an einem Ort.</h1>
+              <p className="muted">
+                Organisiere deine Fächer, analysiere Unterlagen und übe direkt mit Lernkarten.
+              </p>
             </div>
-            <div className="stat">
-              <span>Fächer</span>
-              <strong>{subjects.length}</strong>
-            </div>
-            <div className="stat">
-              <span>Diesen Monat genutzt</span>
-              <strong>
-                {usedThisMonth}/{FREE_MONTHLY_LIMIT}
-              </strong>
-            </div>
-            <div className="stat">
-              <span>Verbleibend</span>
-              <strong>{remainingAnalyses}</strong>
+            <div className="stats">
+              <div className="stat">
+                <span>Analysen</span>
+                <strong>{savedAnalyses.length}</strong>
+              </div>
+              <div className="stat">
+                <span>Fächer</span>
+                <strong>{subjects.length}</strong>
+              </div>
+              <div className="stat">
+                <span>Monat</span>
+                <strong>
+                  {usedThisMonth}/{FREE_MONTHLY_LIMIT}
+                </strong>
+              </div>
+              <div className="stat">
+                <span>Frei</span>
+                <strong>{remainingAnalyses}</strong>
+              </div>
             </div>
           </section>
 
-          <div className="dashboard-grid">
-            <aside className="sidebar">
+          <div className="workspace-grid">
+            <aside className="control-rail">
               <section className="panel stack">
                 <div>
                   <h1>Neue PDF-Datei</h1>
@@ -704,6 +713,9 @@ export default function Home() {
                 </div>
               </section>
 
+            </aside>
+
+            <div className="workspace-main">
               <section className="panel history">
                 <div>
                   <h2>Bibliothek</h2>
@@ -739,58 +751,7 @@ export default function Home() {
                 )}
               </section>
 
-              <section className="panel feedback-card">
-                <div>
-                  <h2>Feedback</h2>
-                  <p className="muted">Hilf mit, Study AI für Studierende nützlicher zu machen.</p>
-                </div>
-
-                <label className="field">
-                  <span>Bewertung</span>
-                  <select value={feedbackRating} onChange={(event) => setFeedbackRating(Number(event.target.value))}>
-                    <option value={5}>5 - Sehr hilfreich</option>
-                    <option value={4}>4 - Hilfreich</option>
-                    <option value={3}>3 - Okay</option>
-                    <option value={2}>2 - Noch schwach</option>
-                    <option value={1}>1 - Nicht hilfreich</option>
-                  </select>
-                </label>
-
-                <fieldset className="field">
-                  <legend>Würdest du Study AI nutzen?</legend>
-                  <div className="option-row">
-                    {FEEDBACK_OPTIONS.map((option) => (
-                      <label key={option.value}>
-                        <input
-                          checked={feedbackWouldUse === option.value}
-                          name="would-use"
-                          onChange={() => setFeedbackWouldUse(option.value)}
-                          type="radio"
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <label className="field">
-                  <span>Was fehlt oder stört?</span>
-                  <textarea
-                    maxLength={1200}
-                    onChange={(event) => setFeedbackMessage(event.target.value)}
-                    placeholder="Zum Beispiel: Lernkarten sind hilfreich, aber ich brauche Export nach Anki..."
-                    value={feedbackMessage}
-                  />
-                </label>
-
-                <button disabled={submittingFeedback} onClick={submitFeedback} type="button">
-                  {submittingFeedback ? "Speichert..." : "Feedback speichern"}
-                </button>
-                {feedbackStatus && <p className="notice">{feedbackStatus}</p>}
-              </section>
-            </aside>
-
-            <section className="panel result detail-panel">
+              <section className="panel result detail-panel">
             {!analysis ? (
               <div className="empty-state large">
                 <strong>Kein Dokument ausgewählt</strong>
@@ -918,8 +879,59 @@ export default function Home() {
                 </div>
               </>
             )}
-            </section>
+              </section>
+            </div>
           </div>
+
+          <section className="panel feedback-card feedback-wide">
+            <div>
+              <h2>Feedback</h2>
+              <p className="muted">Hilf mit, Study AI für Studierende nützlicher zu machen.</p>
+            </div>
+
+            <label className="field">
+              <span>Bewertung</span>
+              <select value={feedbackRating} onChange={(event) => setFeedbackRating(Number(event.target.value))}>
+                <option value={5}>5 - Sehr hilfreich</option>
+                <option value={4}>4 - Hilfreich</option>
+                <option value={3}>3 - Okay</option>
+                <option value={2}>2 - Noch schwach</option>
+                <option value={1}>1 - Nicht hilfreich</option>
+              </select>
+            </label>
+
+            <fieldset className="field">
+              <legend>Würdest du Study AI nutzen?</legend>
+              <div className="option-row">
+                {FEEDBACK_OPTIONS.map((option) => (
+                  <label key={option.value}>
+                    <input
+                      checked={feedbackWouldUse === option.value}
+                      name="would-use"
+                      onChange={() => setFeedbackWouldUse(option.value)}
+                      type="radio"
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <label className="field">
+              <span>Was fehlt oder stört?</span>
+              <textarea
+                maxLength={1200}
+                onChange={(event) => setFeedbackMessage(event.target.value)}
+                placeholder="Zum Beispiel: Lernkarten sind hilfreich, aber ich brauche Export nach Anki..."
+                value={feedbackMessage}
+              />
+            </label>
+
+            <button disabled={submittingFeedback} onClick={submitFeedback} type="button">
+              {submittingFeedback ? "Speichert..." : "Feedback speichern"}
+            </button>
+            {feedbackStatus && <p className="notice">{feedbackStatus}</p>}
+          </section>
         </div>
       )}
     </main>
