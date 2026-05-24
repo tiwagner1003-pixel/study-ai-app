@@ -121,13 +121,15 @@ const RESEARCH_MODES = [
 ];
 
 const WORKSPACE_SECTIONS = [
-  { href: "#lernen", label: "Lernen" },
-  { href: "#bibliothek", label: "Bibliothek" },
-  { href: "#wissen", label: "Wissen" },
-  { href: "#agent", label: "Agent" },
-  { href: "#research", label: "Research" },
-  { href: "#feedback", label: "Feedback" },
-];
+  { id: "lernen", label: "Lernen", description: "PDFs analysieren und Karten üben" },
+  { id: "bibliothek", label: "Bibliothek", description: "Dokumente und Fächer verwalten" },
+  { id: "wissen", label: "Wissen", description: "Notizen und Zusammenhänge speichern" },
+  { id: "agent", label: "Agent", description: "Studien-Workflows erledigen" },
+  { id: "research", label: "Research", description: "Reports und KPIs extrahieren" },
+  { id: "feedback", label: "Feedback", description: "Produktfeedback geben" },
+] as const;
+
+type WorkspaceSection = (typeof WORKSPACE_SECTIONS)[number]["id"];
 
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
@@ -243,6 +245,7 @@ export default function Home() {
   const [researchBrief, setResearchBrief] = useState("");
   const [researchFiles, setResearchFiles] = useState<File[]>([]);
   const [runningResearch, setRunningResearch] = useState(false);
+  const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSection>("lernen");
   const [usedThisMonth, setUsedThisMonth] = useState(0);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -287,6 +290,8 @@ export default function Home() {
         "Demo-Analyse testen",
         "Feedback nach dem ersten Durchlauf notieren",
       ];
+  const activeSection = WORKSPACE_SECTIONS.find((section) => section.id === activeWorkspaceSection) || WORKSPACE_SECTIONS[0];
+  const hasWorkspaceRail = activeWorkspaceSection === "lernen" || activeWorkspaceSection === "bibliothek";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -319,6 +324,25 @@ export default function Home() {
   useEffect(() => {
     resetCardSession();
   }, [analysis?.id]);
+
+  useEffect(() => {
+    const updateSectionFromHash = () => {
+      const section = window.location.hash.replace("#", "");
+      if (WORKSPACE_SECTIONS.some((item) => item.id === section)) {
+        setActiveWorkspaceSection(section as WorkspaceSection);
+      }
+    };
+
+    updateSectionFromHash();
+    window.addEventListener("hashchange", updateSectionFromHash);
+
+    return () => window.removeEventListener("hashchange", updateSectionFromHash);
+  }, []);
+
+  function openWorkspaceSection(section: WorkspaceSection) {
+    setActiveWorkspaceSection(section);
+    window.history.replaceState(null, "", `#${section}`);
+  }
 
   async function loadSubjects() {
     const { data, error } = await supabase
@@ -1074,13 +1098,25 @@ export default function Home() {
 
           <nav className="workspace-nav" aria-label="Workspace Bereiche">
             {WORKSPACE_SECTIONS.map((section) => (
-              <a href={section.href} key={section.href}>
-                {section.label}
-              </a>
+              <button
+                className={activeWorkspaceSection === section.id ? "active" : ""}
+                key={section.id}
+                onClick={() => openWorkspaceSection(section.id)}
+                type="button"
+              >
+                <span>{section.label}</span>
+                <small>{section.description}</small>
+              </button>
             ))}
           </nav>
 
-          <section className="study-cockpit">
+          <section className="workspace-page-title">
+            <p className="section-label">Aktueller Bereich</p>
+            <h2>{activeSection.label}</h2>
+            <p className="muted">{activeSection.description}</p>
+          </section>
+
+          <section className="study-cockpit" hidden={activeWorkspaceSection !== "lernen"}>
             <article className="cockpit-card primary">
               <span>Aktueller Fokus</span>
               <strong>{currentLearningFocus}</strong>
@@ -1123,9 +1159,10 @@ export default function Home() {
             </article>
           </section>
 
-          <div className="workspace-grid">
+          <div className={`workspace-grid ${hasWorkspaceRail ? "" : "single-column"}`}>
+            {hasWorkspaceRail && (
             <aside className="control-rail">
-              <section className="panel stack workspace-section" id="lernen">
+              <section className="panel stack workspace-section" hidden={activeWorkspaceSection !== "lernen"} id="lernen">
                 <div>
                   <p className="section-label">Lernstart</p>
                   <h1>Neue Unterlage analysieren</h1>
@@ -1220,90 +1257,98 @@ export default function Home() {
                 </div>
               </section>
 
-              <section className="panel knowledge-card workspace-section" id="wissen">
+            </aside>
+            )}
+
+            <div className="workspace-main">
+              <section className="panel knowledge-card workspace-section" hidden={activeWorkspaceSection !== "wissen"} id="wissen">
                 <div>
                   <p className="section-label">Second Brain</p>
                   <h2>Wissenssystem</h2>
                   <p className="muted">Speichere Themen, Notizen, Projekte und Zusammenhänge als wiederverwendbare Bausteine.</p>
                 </div>
 
-                <label className="field">
-                  <span>Typ</span>
-                  <select value={knowledgeType} onChange={(event) => setKnowledgeType(event.target.value)}>
-                    {KNOWLEDGE_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="knowledge-page-grid">
+                  <div className="agent-form">
+                    <label className="field">
+                      <span>Typ</span>
+                      <select value={knowledgeType} onChange={(event) => setKnowledgeType(event.target.value)}>
+                        {KNOWLEDGE_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                <input
-                  onChange={(event) => setKnowledgeTitle(event.target.value)}
-                  placeholder="Titel, z. B. DCF Valuation"
-                  value={knowledgeTitle}
-                />
-                <textarea
-                  onChange={(event) => setKnowledgeContent(event.target.value)}
-                  placeholder="Notiz, Projektidee oder Zusammenhang..."
-                  value={knowledgeContent}
-                />
-                <input
-                  onChange={(event) => setKnowledgeTags(event.target.value)}
-                  placeholder="Tags, kommasepariert"
-                  value={knowledgeTags}
-                />
-                <input
-                  onChange={(event) => setKnowledgeRelated(event.target.value)}
-                  placeholder="Verbindungen, z. B. Corporate Finance"
-                  value={knowledgeRelated}
-                />
-                <div className="actions split-actions">
-                  <button disabled={savingKnowledge} onClick={() => saveKnowledgeItem()} type="button">
-                    {savingKnowledge ? "Speichert..." : "Speichern"}
-                  </button>
-                  <button
-                    className="secondary-button"
-                    disabled={!analysis || savingKnowledge}
-                    onClick={() => saveKnowledgeItem("analysis")}
-                    type="button"
-                  >
-                    Analyse merken
-                  </button>
-                </div>
+                    <input
+                      onChange={(event) => setKnowledgeTitle(event.target.value)}
+                      placeholder="Titel, z. B. DCF Valuation"
+                      value={knowledgeTitle}
+                    />
+                    <textarea
+                      onChange={(event) => setKnowledgeContent(event.target.value)}
+                      placeholder="Notiz, Projektidee oder Zusammenhang..."
+                      value={knowledgeContent}
+                    />
+                    <input
+                      onChange={(event) => setKnowledgeTags(event.target.value)}
+                      placeholder="Tags, kommasepariert"
+                      value={knowledgeTags}
+                    />
+                    <input
+                      onChange={(event) => setKnowledgeRelated(event.target.value)}
+                      placeholder="Verbindungen, z. B. Corporate Finance"
+                      value={knowledgeRelated}
+                    />
+                    <div className="actions split-actions">
+                      <button disabled={savingKnowledge} onClick={() => saveKnowledgeItem()} type="button">
+                        {savingKnowledge ? "Speichert..." : "Speichern"}
+                      </button>
+                      <button
+                        className="secondary-button"
+                        disabled={!analysis || savingKnowledge}
+                        onClick={() => saveKnowledgeItem("analysis")}
+                        type="button"
+                      >
+                        Analyse merken
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="knowledge-list">
-                  {knowledgeItems.length === 0 ? (
-                    <p className="muted">Noch keine Einträge gespeichert.</p>
-                  ) : (
-                    knowledgeItems.slice(0, 7).map((item) => {
-                      const subject = getKnowledgeSubject(item.subjects || null);
+                  <div className="knowledge-list">
+                    {knowledgeItems.length === 0 ? (
+                      <div className="empty-state">
+                        <strong>Noch keine Einträge gespeichert</strong>
+                        <p>Lege dein erstes Thema, Projekt oder eine Verbindung an.</p>
+                      </div>
+                    ) : (
+                      knowledgeItems.map((item) => {
+                        const subject = getKnowledgeSubject(item.subjects || null);
 
-                      return (
-                        <article key={item.id}>
-                          <span>{getTypeLabel(KNOWLEDGE_TYPES, item.item_type)}</span>
-                          <strong>{item.title}</strong>
-                          <p>{item.content}</p>
-                          {item.tags.length > 0 && (
-                            <small>{item.tags.slice(0, 3).join(" | ")}</small>
-                          )}
-                          {subject && (
-                            <small className="subject-badge">
-                              <span style={{ backgroundColor: subject.color }} />
-                              {subject.name}
-                            </small>
-                          )}
-                        </article>
-                      );
-                    })
-                  )}
+                        return (
+                          <article key={item.id}>
+                            <span>{getTypeLabel(KNOWLEDGE_TYPES, item.item_type)}</span>
+                            <strong>{item.title}</strong>
+                            <p>{item.content}</p>
+                            {item.tags.length > 0 && (
+                              <small>{item.tags.slice(0, 3).join(" | ")}</small>
+                            )}
+                            {subject && (
+                              <small className="subject-badge">
+                                <span style={{ backgroundColor: subject.color }} />
+                                {subject.name}
+                              </small>
+                            )}
+                          </article>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               </section>
 
-            </aside>
-
-            <div className="workspace-main">
-              <section className="panel history workspace-section" id="bibliothek">
+              <section className="panel history workspace-section" hidden={activeWorkspaceSection !== "bibliothek"} id="bibliothek">
                 <div>
                   <p className="section-label">Archiv</p>
                   <h2>Bibliothek</h2>
@@ -1339,7 +1384,7 @@ export default function Home() {
                 )}
               </section>
 
-              <section className="panel result detail-panel workspace-section">
+              <section className="panel result detail-panel workspace-section" hidden={activeWorkspaceSection !== "lernen" && activeWorkspaceSection !== "bibliothek"}>
             {!analysis ? (
               <div className="empty-state large">
                 <strong>Kein Dokument ausgewählt</strong>
@@ -1469,7 +1514,7 @@ export default function Home() {
             )}
               </section>
 
-              <section className="panel phase-panel workspace-section" id="agent">
+              <section className="panel phase-panel workspace-section" hidden={activeWorkspaceSection !== "agent"} id="agent">
                 <div className="phase-header">
                   <div>
                     <p className="section-label">Produktiv arbeiten</p>
@@ -1528,7 +1573,7 @@ export default function Home() {
                 </div>
               </section>
 
-              <section className="panel phase-panel workspace-section" id="research">
+              <section className="panel phase-panel workspace-section" hidden={activeWorkspaceSection !== "research"} id="research">
                 <div className="phase-header">
                   <div>
                     <p className="section-label">Finance & Consulting</p>
@@ -1626,7 +1671,7 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="panel feedback-card feedback-wide workspace-section" id="feedback">
+          <section className="panel feedback-card feedback-wide workspace-section" hidden={activeWorkspaceSection !== "feedback"} id="feedback">
             <div>
               <p className="section-label">Produkt verbessern</p>
               <h2>Feedback</h2>
