@@ -534,35 +534,59 @@ export default function Home() {
       {!session ? (
         <section className="login-layout">
           <div className="login-copy">
-            <p className="eyebrow">Lernmaterial aus PDFs</p>
-            <h1>Aus Skripten werden Zusammenfassungen, Fragen und Lernkarten.</h1>
+            <p className="eyebrow">AI Study Platform</p>
+            <h1>Aus PDFs wird ein persönlicher Lernraum.</h1>
             <p className="muted">
-              Lade eine PDF-Datei hoch. Du erhältst strukturiertes Lernmaterial und übst direkt mit Karten.
+              Study AI verwandelt Skripte, Paper und Vorlesungsfolien in klare Zusammenfassungen,
+              Takeaways, offene Fragen und Lernkarten.
             </p>
             <div className="feature-list">
-              <span>PDF analysieren</span>
-              <span>Takeaways speichern</span>
+              <span>PDFs verstehen</span>
+              <span>Wissen strukturieren</span>
               <span>Lernkarten üben</span>
             </div>
-            <div className="product-preview" aria-label="Beispielanalyse">
-              <div className="preview-header">
-                <span>Beispielanalyse</span>
-                <strong>5 Lernkarten</strong>
+
+            <div className="hero-product" aria-label="Produktvorschau">
+              <div className="hero-product-top">
+                <span>Study AI Workspace</span>
+                <strong>Live-Vorschau</strong>
+              </div>
+              <div className="hero-product-grid">
+                <div className="preview-upload">
+                  <span className="preview-icon">PDF</span>
+                  <div>
+                    <strong>Investition_Skript.pdf</strong>
+                    <p>Analyse bereit</p>
+                  </div>
+                </div>
+                <div className="preview-score">
+                  <span>5</span>
+                  <p>Lernkarten</p>
+                </div>
               </div>
               <div className="preview-content">
                 <p>Zusammenfassung</p>
-                <strong>Marketing beginnt mit dem Verstehen von Kundenbedürfnissen.</strong>
+                <strong>Kapitalwert, Risiko und Zahlungsreihe werden zu einem klaren Lernpfad.</strong>
               </div>
-              <div className="preview-flashcard">
-                <span>Frage</span>
-                <p>Welche vier Elemente gehören zum Marketing-Mix?</p>
+              <div className="preview-columns">
+                <div>
+                  <span>Takeaway</span>
+                  <p>Entscheidungen brauchen Vergleichbarkeit.</p>
+                </div>
+                <div>
+                  <span>Frage</span>
+                  <p>Wann ist der Kapitalwert positiv?</p>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="panel auth-panel stack">
-            <h2>Einloggen</h2>
-            <p className="muted">Erstelle einen Account oder logge dich ein.</p>
+            <div className="auth-heading">
+              <p className="eyebrow">Dein Workspace</p>
+              <h2>Einloggen</h2>
+              <p className="muted">Erstelle einen Account oder logge dich ein.</p>
+            </div>
             <div className="stack">
               <input
                 type="email"
@@ -584,6 +608,10 @@ export default function Home() {
               </div>
             </div>
             {message && <p className="notice">{message}</p>}
+            <div className="auth-footnote">
+              <span>3 freie Analysen pro Monat</span>
+              <span>PDFs werden nicht dauerhaft gespeichert</span>
+            </div>
           </div>
         </section>
       ) : (
