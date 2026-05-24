@@ -649,6 +649,116 @@ fieldset {
   color: #7de0d2;
 }
 
+.workspace-nav {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 8px;
+  position: sticky;
+  top: 10px;
+  z-index: 5;
+}
+
+.workspace-nav a {
+  border-radius: 6px;
+  color: var(--text);
+  font-weight: 800;
+  min-width: 0;
+  padding: 10px 8px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.workspace-nav a:hover {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.study-cockpit {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.cockpit-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-height: 150px;
+  padding: 18px;
+}
+
+.cockpit-card.primary {
+  background:
+    linear-gradient(135deg, rgba(22, 121, 111, 0.1), transparent 48%),
+    #ffffff;
+  border-color: #b7dfd8;
+}
+
+.cockpit-card > span,
+.section-label {
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.cockpit-card strong {
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.cockpit-card p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.cockpit-card ul {
+  color: var(--text);
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.cockpit-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cockpit-metrics div {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+}
+
+.cockpit-metrics strong {
+  color: var(--text);
+  font-size: 22px;
+}
+
+.cockpit-metrics small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.workspace-section {
+  scroll-margin-top: 88px;
+}
+
 .workspace-grid {
   display: grid;
   gap: 18px;
@@ -672,6 +782,17 @@ fieldset {
   border-radius: 8px;
   box-shadow: 0 1px 0 rgba(25, 38, 52, 0.03);
   padding: 22px;
+}
+
+.panel h1,
+.panel h2,
+.panel h3 {
+  color: var(--text);
+}
+
+.panel h1 {
+  font-size: 22px;
+  margin: 4px 0;
 }
 
 .stack {
@@ -1065,6 +1186,20 @@ fieldset {
   line-height: 1.35;
 }
 
+.knowledge-list p {
+  color: var(--muted);
+  display: -webkit-box;
+  line-height: 1.5;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.knowledge-list small {
+  color: var(--muted);
+}
+
 .phase-panel {
   display: grid;
   gap: 18px;
@@ -1366,8 +1501,18 @@ fieldset {
 
   .workspace-hero,
   .workspace-grid,
-  .stats {
+  .stats,
+  .study-cockpit {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    position: static;
+  }
+
+  .workspace-nav a {
+    font-size: 14px;
   }
 
   .workspace-hero {
@@ -1376,6 +1521,10 @@ fieldset {
 
   .workspace-hero h1 {
     font-size: 28px;
+  }
+
+  .cockpit-card {
+    min-height: auto;
   }
 
   .workspace-main .history-list,

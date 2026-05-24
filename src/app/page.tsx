@@ -120,6 +120,15 @@ const RESEARCH_MODES = [
   { value: "kpi_extraction", label: "KPI Extraction" },
 ];
 
+const WORKSPACE_SECTIONS = [
+  { href: "#lernen", label: "Lernen" },
+  { href: "#bibliothek", label: "Bibliothek" },
+  { href: "#wissen", label: "Wissen" },
+  { href: "#agent", label: "Agent" },
+  { href: "#research", label: "Research" },
+  { href: "#feedback", label: "Feedback" },
+];
+
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
   file_name: "Demo: Einführung in Marketing.pdf",
@@ -256,6 +265,28 @@ export default function Home() {
     selectedSubjectId === ALL_SUBJECTS
       ? savedAnalyses
       : savedAnalyses.filter((item) => item.subject_id === selectedSubjectId);
+  const selectedSubjectName =
+    selectedSubjectId === ALL_SUBJECTS
+      ? "Alle Fächer"
+      : subjects.find((subject) => subject.id === selectedSubjectId)?.name || "Ausgewähltes Fach";
+  const latestAgentRun = agentRuns[0];
+  const latestResearchReport = researchReports[0];
+  const currentLearningFocus = analysis
+    ? analysis.file_name || "Ausgewähltes Dokument"
+    : savedAnalyses[0]?.file_name || "Noch kein Dokument";
+  const nextStudyActions = analysis
+    ? [
+        `${analysis.takeaways.length} Kernpunkte wiederholen`,
+        `${totalCards} Lernkarten aktiv abfragen`,
+        `${analysis.open_questions.length} offene Fragen klären`,
+        "Analyse ins Wissenssystem übernehmen",
+      ]
+    : [
+        "Erste PDF hochladen",
+        "Fach oder Modul anlegen",
+        "Demo-Analyse testen",
+        "Feedback nach dem ersten Durchlauf notieren",
+      ];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -1014,9 +1045,9 @@ export default function Home() {
           <section className="workspace-hero">
             <div>
               <p className="eyebrow">AI Study Workspace</p>
-              <h1>Lernen, sortieren und wiederholen an einem Ort.</h1>
+              <h1>Dein Lerncockpit für Unterlagen, Wissen und Projekte.</h1>
               <p className="muted">
-                Organisiere deine Fächer, analysiere Unterlagen und übe direkt mit Lernkarten.
+                Starte mit einer PDF, arbeite aktiv mit Lernkarten und verwandle gute Notizen in ein wachsendes Wissenssystem.
               </p>
             </div>
             <div className="stats">
@@ -1041,12 +1072,64 @@ export default function Home() {
             </div>
           </section>
 
+          <nav className="workspace-nav" aria-label="Workspace Bereiche">
+            {WORKSPACE_SECTIONS.map((section) => (
+              <a href={section.href} key={section.href}>
+                {section.label}
+              </a>
+            ))}
+          </nav>
+
+          <section className="study-cockpit">
+            <article className="cockpit-card primary">
+              <span>Aktueller Fokus</span>
+              <strong>{currentLearningFocus}</strong>
+              <p>{analysis ? `${selectedSubjectName} | ${totalCards} Lernkarten bereit` : "Lade ein Dokument hoch oder öffne die Demo."}</p>
+            </article>
+            <article className="cockpit-card">
+              <span>Heute sinnvoll</span>
+              <ul>
+                {nextStudyActions.slice(0, 3).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+            <article className="cockpit-card">
+              <span>Workspace</span>
+              <div className="cockpit-metrics">
+                <div>
+                  <strong>{knowledgeItems.length}</strong>
+                  <small>Wissenseinträge</small>
+                </div>
+                <div>
+                  <strong>{agentRuns.length}</strong>
+                  <small>Agent-Läufe</small>
+                </div>
+                <div>
+                  <strong>{researchReports.length}</strong>
+                  <small>Reports</small>
+                </div>
+              </div>
+            </article>
+            <article className="cockpit-card">
+              <span>Letzter Output</span>
+              <p>
+                {latestAgentRun
+                  ? latestAgentRun.next_actions[0] || "Letztes Agent-Ergebnis prüfen."
+                  : latestResearchReport
+                    ? latestResearchReport.title
+                    : "Nutze Agent oder Research für Gliederungen, Memos und Aufgabenlisten."}
+              </p>
+            </article>
+          </section>
+
           <div className="workspace-grid">
             <aside className="control-rail">
-              <section className="panel stack">
+              <section className="panel stack workspace-section" id="lernen">
                 <div>
-                  <h1>Neue PDF-Datei</h1>
-                  <p className="muted">Lade ein Skript, Paper oder eine Vorlesungs-PDF hoch.</p>
+                  <p className="section-label">Lernstart</p>
+                  <h1>Neue Unterlage analysieren</h1>
+                  <p className="muted">Skripte, Paper, Folien oder Geschäftsberichte werden zu Lernmaterial.</p>
                 </div>
                 <label className="field">
                   <span>Fach</span>
@@ -1084,8 +1167,9 @@ export default function Home() {
                 </div>
               </section>
 
-              <section className="panel subject-card">
+              <section className="panel subject-card workspace-section">
                 <div>
+                  <p className="section-label">Module</p>
                   <h2>Fächer</h2>
                   <p className="muted">Organisiere deine Unterlagen nach Modulen.</p>
                 </div>
@@ -1136,10 +1220,11 @@ export default function Home() {
                 </div>
               </section>
 
-              <section className="panel knowledge-card">
+              <section className="panel knowledge-card workspace-section" id="wissen">
                 <div>
+                  <p className="section-label">Second Brain</p>
                   <h2>Wissenssystem</h2>
-                  <p className="muted">Speichere Themen, Notizen, Projekte und Zusammenhänge.</p>
+                  <p className="muted">Speichere Themen, Notizen, Projekte und Zusammenhänge als wiederverwendbare Bausteine.</p>
                 </div>
 
                 <label className="field">
@@ -1191,13 +1276,17 @@ export default function Home() {
                   {knowledgeItems.length === 0 ? (
                     <p className="muted">Noch keine Einträge gespeichert.</p>
                   ) : (
-                    knowledgeItems.slice(0, 5).map((item) => {
+                    knowledgeItems.slice(0, 7).map((item) => {
                       const subject = getKnowledgeSubject(item.subjects || null);
 
                       return (
                         <article key={item.id}>
                           <span>{getTypeLabel(KNOWLEDGE_TYPES, item.item_type)}</span>
                           <strong>{item.title}</strong>
+                          <p>{item.content}</p>
+                          {item.tags.length > 0 && (
+                            <small>{item.tags.slice(0, 3).join(" | ")}</small>
+                          )}
                           {subject && (
                             <small className="subject-badge">
                               <span style={{ backgroundColor: subject.color }} />
@@ -1214,10 +1303,11 @@ export default function Home() {
             </aside>
 
             <div className="workspace-main">
-              <section className="panel history">
+              <section className="panel history workspace-section" id="bibliothek">
                 <div>
+                  <p className="section-label">Archiv</p>
                   <h2>Bibliothek</h2>
-                  <p className="muted">Deine gespeicherten Lernunterlagen.</p>
+                  <p className="muted">{selectedSubjectName}: gespeicherte Analysen und Lernunterlagen.</p>
                 </div>
                 {visibleAnalyses.length === 0 ? (
                   <div className="empty-state">
@@ -1249,7 +1339,7 @@ export default function Home() {
                 )}
               </section>
 
-              <section className="panel result detail-panel">
+              <section className="panel result detail-panel workspace-section">
             {!analysis ? (
               <div className="empty-state large">
                 <strong>Kein Dokument ausgewählt</strong>
@@ -1379,10 +1469,10 @@ export default function Home() {
             )}
               </section>
 
-              <section className="panel phase-panel">
+              <section className="panel phase-panel workspace-section" id="agent">
                 <div className="phase-header">
                   <div>
-                    <p className="eyebrow">Phase 3</p>
+                    <p className="section-label">Produktiv arbeiten</p>
                     <h2>Workflow-Agent</h2>
                     <p className="muted">
                       Nutzt dein ausgewähltes Dokument und dein Wissenssystem als Arbeitskontext.
@@ -1438,10 +1528,10 @@ export default function Home() {
                 </div>
               </section>
 
-              <section className="panel phase-panel">
+              <section className="panel phase-panel workspace-section" id="research">
                 <div className="phase-header">
                   <div>
-                    <p className="eyebrow">Phase 4</p>
+                    <p className="section-label">Finance & Consulting</p>
                     <h2>Research Assistant</h2>
                     <p className="muted">
                       Erstellt finance- und consulting-nahe Reports aus Briefings, PDFs und gespeicherten Analysen.
@@ -1536,8 +1626,9 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="panel feedback-card feedback-wide">
+          <section className="panel feedback-card feedback-wide workspace-section" id="feedback">
             <div>
+              <p className="section-label">Produkt verbessern</p>
               <h2>Feedback</h2>
               <p className="muted">Hilf mit, Study AI für Studierende nützlicher zu machen.</p>
             </div>
