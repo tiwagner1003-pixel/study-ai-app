@@ -93,13 +93,18 @@ const FEEDBACK_OPTIONS = [
   { value: "no", label: "Nein" },
 ];
 
-const SUBJECT_COLORS = ["#00b894", "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1"];
+const SUBJECT_COLORS = ["#0f766e", "#2563eb", "#7c3aed", "#b45309", "#be123c"];
 const SUBJECT_COLOR_UPGRADES: Record<string, string> = {
-  "#16796f": "#00b894",
-  "#2f6fbb": "#06b6d4",
-  "#7c5cc4": "#3b82f6",
-  "#a15c07": "#14b8a6",
-  "#b42318": "#6366f1",
+  "#16796f": "#0f766e",
+  "#2f6fbb": "#2563eb",
+  "#7c5cc4": "#7c3aed",
+  "#a15c07": "#b45309",
+  "#b42318": "#be123c",
+  "#00b894": "#0f766e",
+  "#14b8a6": "#0f766e",
+  "#06b6d4": "#2563eb",
+  "#3b82f6": "#2563eb",
+  "#6366f1": "#7c3aed",
 };
 const ALL_SUBJECTS = "all";
 
@@ -143,7 +148,7 @@ const DEMO_ANALYSIS: Analysis = {
   file_name: "Demo: Einführung in Marketing.pdf",
   subject_id: "demo-subject",
   subject_name: "Marketing",
-  subject_color: "#00b894",
+  subject_color: "#0f766e",
   created_at: new Date().toISOString(),
   summary:
     "Das Dokument erklärt die Grundlagen des Marketings und zeigt, wie Unternehmen Zielgruppen, Positionierung und Marketinginstrumente nutzen. Ein Schwerpunkt liegt auf dem Marketing-Mix mit Produkt, Preis, Distribution und Kommunikation. Zudem wird deutlich, dass Marketing nicht nur Werbung ist, sondern ein systematischer Prozess zur Schaffung von Kundennutzen. Erfolgreiches Marketing beginnt mit Marktanalyse und Segmentierung. Danach werden konkrete Strategien entwickelt, umgesetzt und kontrolliert.",
