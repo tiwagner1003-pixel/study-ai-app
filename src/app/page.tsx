@@ -93,7 +93,14 @@ const FEEDBACK_OPTIONS = [
   { value: "no", label: "Nein" },
 ];
 
-const SUBJECT_COLORS = ["#16796f", "#2f6fbb", "#7c5cc4", "#a15c07", "#b42318"];
+const SUBJECT_COLORS = ["#00b894", "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1"];
+const SUBJECT_COLOR_UPGRADES: Record<string, string> = {
+  "#16796f": "#00b894",
+  "#2f6fbb": "#06b6d4",
+  "#7c5cc4": "#3b82f6",
+  "#a15c07": "#14b8a6",
+  "#b42318": "#6366f1",
+};
 const ALL_SUBJECTS = "all";
 
 const KNOWLEDGE_TYPES = [
@@ -136,7 +143,7 @@ const DEMO_ANALYSIS: Analysis = {
   file_name: "Demo: Einführung in Marketing.pdf",
   subject_id: "demo-subject",
   subject_name: "Marketing",
-  subject_color: "#16796f",
+  subject_color: "#00b894",
   created_at: new Date().toISOString(),
   summary:
     "Das Dokument erklärt die Grundlagen des Marketings und zeigt, wie Unternehmen Zielgruppen, Positionierung und Marketinginstrumente nutzen. Ein Schwerpunkt liegt auf dem Marketing-Mix mit Produkt, Preis, Distribution und Kommunikation. Zudem wird deutlich, dass Marketing nicht nur Werbung ist, sondern ein systematischer Prozess zur Schaffung von Kundennutzen. Erfolgreiches Marketing beginnt mit Marktanalyse und Segmentierung. Danach werden konkrete Strategien entwickelt, umgesetzt und kontrolliert.",
@@ -191,6 +198,11 @@ function getSubject(subjects: NonNullable<ReturnType<typeof getDocument>>["subje
 
 function getKnowledgeSubject(subjects: KnowledgeItem["subjects"]) {
   return Array.isArray(subjects) ? subjects[0] : subjects;
+}
+
+function getSubjectColor(color?: string | null) {
+  if (!color) return SUBJECT_COLORS[0];
+  return SUBJECT_COLORS.includes(color.toLowerCase()) ? color : SUBJECT_COLOR_UPGRADES[color.toLowerCase()] || SUBJECT_COLORS[0];
 }
 
 function splitCommaList(value: string) {
@@ -1226,7 +1238,7 @@ export default function Home() {
                       onClick={() => setSelectedSubjectId(subject.id)}
                       type="button"
                     >
-                      <span className="subject-dot" style={{ backgroundColor: subject.color }} />
+                      <span className="subject-dot" style={{ backgroundColor: getSubjectColor(subject.color) }} />
                       {subject.name}
                       <span>{savedAnalyses.filter((item) => item.subject_id === subject.id).length}</span>
                     </button>
@@ -1336,7 +1348,7 @@ export default function Home() {
                             )}
                             {subject && (
                               <small className="subject-badge">
-                                <span style={{ backgroundColor: subject.color }} />
+                                <span style={{ backgroundColor: getSubjectColor(subject.color) }} />
                                 {subject.name}
                               </small>
                             )}
@@ -1371,7 +1383,7 @@ export default function Home() {
                         <span>{item.file_name}</span>
                         {item.subject_name && (
                           <small className="subject-badge">
-                            <span style={{ backgroundColor: item.subject_color || SUBJECT_COLORS[0] }} />
+                            <span style={{ backgroundColor: getSubjectColor(item.subject_color) }} />
                             {item.subject_name}
                           </small>
                         )}
@@ -1397,7 +1409,7 @@ export default function Home() {
                     <p className="eyebrow">{analysis.file_name || "Aktuelle Analyse"}</p>
                     {analysis.subject_name && (
                       <p className="subject-badge detail-badge">
-                        <span style={{ backgroundColor: analysis.subject_color || SUBJECT_COLORS[0] }} />
+                        <span style={{ backgroundColor: getSubjectColor(analysis.subject_color) }} />
                         {analysis.subject_name}
                       </p>
                     )}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 
-const SUBJECT_COLORS = ["#16796f", "#2f6fbb", "#7c5cc4", "#a15c07", "#b42318"];
+const SUBJECT_COLORS = ["#00b894", "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1"];
 
 export async function POST(request: NextRequest) {
   try {
