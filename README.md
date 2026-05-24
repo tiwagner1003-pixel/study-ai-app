@@ -180,6 +180,19 @@ Aktuell enthält sie auch:
 - `agent_runs`: speichert Ergebnisse des Workflow-Agents
 - `research_reports`: speichert Finance-/Consulting-Reports
 
+## 11. Entwicklungs-Agents
+
+Die Datei `AGENTS.md` beschreibt die Arbeitsrollen für die Weiterentwicklung:
+
+- Product Strategist
+- Learning Experience Agent
+- UX/UI Agent
+- AI Workflow Agent
+- Full-Stack Engineer
+- QA & Deployment Agent
+
+Diese Agents sind keine separaten Nutzerfunktionen, sondern ein Projekt-Setup, um neue Features strukturierter zu planen, umzusetzen und zu prüfen.
+
 ## Nächste Ausbaustufen
 
 1. Lernfortschritt dauerhaft speichern
