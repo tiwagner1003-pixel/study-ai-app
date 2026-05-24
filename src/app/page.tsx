@@ -135,38 +135,15 @@ const RESEARCH_MODES = [
 ];
 
 const WORKSPACE_SECTIONS = [
-  { id: "lernen", label: "Unterlagen", description: "PDFs verstehen und Lernkarten üben" },
-  { id: "bibliothek", label: "Bibliothek", description: "Module und Dokumente verwalten" },
-  { id: "wissen", label: "Lernspeicher", description: "Kernwissen langfristig sichern" },
-  { id: "agent", label: "Aufgaben", description: "Aus Wissen konkrete Abgaben bauen" },
-  { id: "research", label: "Vertiefung", description: "Paper, Reports und Cases analysieren" },
-  { id: "feedback", label: "Feedback", description: "Produktfeedback geben" },
+  { id: "lernen", label: "Unterlagen", description: "PDFs verstehen und Lernkarten üben", meta: "Schritt 1" },
+  { id: "wissen", label: "Lernspeicher", description: "Kernwissen langfristig sichern", meta: "Schritt 2" },
+  { id: "agent", label: "Aufgaben", description: "Aus Wissen konkrete Abgaben bauen", meta: "Schritt 3" },
+  { id: "research", label: "Vertiefung", description: "Paper, Reports und Cases analysieren", meta: "Schritt 4" },
+  { id: "bibliothek", label: "Bibliothek", description: "Module und Dokumente verwalten", meta: "Archiv" },
+  { id: "feedback", label: "Feedback", description: "Produktfeedback geben", meta: "Rückmeldung" },
 ] as const;
 
 type WorkspaceSection = (typeof WORKSPACE_SECTIONS)[number]["id"];
-
-const STUDY_WORKFLOW_STEPS: { section: WorkspaceSection; title: string; body: string }[] = [
-  {
-    section: "lernen",
-    title: "1. Unterlagen verstehen",
-    body: "PDF hochladen, Zusammenfassung lesen, offene Fragen erkennen und Lernkarten starten.",
-  },
-  {
-    section: "wissen",
-    title: "2. Wissen sichern",
-    body: "Wichtige Konzepte, Definitionen und Zusammenhänge in deinen Lernspeicher übernehmen.",
-  },
-  {
-    section: "agent",
-    title: "3. Aufgaben erledigen",
-    body: "Aus deinem Material Gliederungen, Literaturpläne, E-Mails oder To-dos erzeugen.",
-  },
-  {
-    section: "research",
-    title: "4. Vertiefen",
-    body: "Für Hausarbeiten, Cases oder Finance-Themen Reports, Vergleiche und KPIs ableiten.",
-  },
-];
 
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
@@ -1174,25 +1151,12 @@ export default function Home() {
                 onClick={() => openWorkspaceSection(section.id)}
                 type="button"
               >
-                <span>{section.label}</span>
+                <small className="nav-meta">{section.meta}</small>
+                <strong>{section.label}</strong>
                 <small>{section.description}</small>
               </button>
             ))}
           </nav>
-
-          <section className="workflow-strip" aria-label="Lernworkflow">
-            {STUDY_WORKFLOW_STEPS.map((step) => (
-              <button
-                className={activeWorkspaceSection === step.section ? "active" : ""}
-                key={step.section}
-                onClick={() => openWorkspaceSection(step.section)}
-                type="button"
-              >
-                <strong>{step.title}</strong>
-                <span>{step.body}</span>
-              </button>
-            ))}
-          </section>
 
           <section className="study-cockpit" hidden={activeWorkspaceSection !== "lernen"}>
             <article className="cockpit-card primary fade-up">

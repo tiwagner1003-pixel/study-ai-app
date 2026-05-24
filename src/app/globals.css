@@ -673,11 +673,12 @@ fieldset {
   border-radius: 6px;
   color: var(--text);
   display: grid;
-  gap: 3px;
+  gap: 5px;
   font-weight: 800;
   justify-items: start;
   min-width: 0;
-  padding: 10px;
+  min-height: 106px;
+  padding: 12px;
   text-align: left;
 }
 
@@ -695,58 +696,17 @@ fieldset {
   line-height: 1.25;
 }
 
-.workspace-page-title {
-  background: #ffffff;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: grid;
-  gap: 4px;
-  padding: 18px 20px;
-}
-
-.workspace-page-title h2 {
-  font-size: 24px;
-  margin: 0;
-}
-
-.workflow-strip {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.workflow-strip button {
-  background: #ffffff;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--text);
-  display: grid;
-  gap: 6px;
-  justify-items: start;
-  min-height: 126px;
-  padding: 16px;
-  text-align: left;
-}
-
-.workflow-strip button:hover,
-.workflow-strip button.active {
-  background: var(--accent-soft);
-  border-color: #9bc9c2;
-  color: var(--text);
-  transform: none;
-}
-
-.workflow-strip strong {
+.workspace-nav strong {
   color: var(--accent-dark);
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.25;
 }
 
-.workflow-strip span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.45;
+.workspace-nav .nav-meta {
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .study-cockpit {
@@ -1795,8 +1755,7 @@ fieldset {
   .workspace-hero,
   .workspace-grid,
   .stats,
-  .study-cockpit,
-  .workflow-strip {
+  .study-cockpit {
     grid-template-columns: 1fr;
   }
 
@@ -1808,6 +1767,7 @@ fieldset {
   .workspace-nav button {
     font-size: 14px;
     justify-items: center;
+    min-height: auto;
     text-align: center;
   }
 
@@ -1820,10 +1780,6 @@ fieldset {
   }
 
   .cockpit-card {
-    min-height: auto;
-  }
-
-  .workflow-strip button {
     min-height: auto;
   }
 
