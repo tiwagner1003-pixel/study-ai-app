@@ -29,6 +29,38 @@ type Subject = {
   created_at?: string;
 };
 
+type KnowledgeItem = {
+  id: string;
+  item_type: string;
+  title: string;
+  content: string;
+  tags: string[];
+  related_titles: string[];
+  created_at: string;
+  subjects?: { name: string; color: string } | { name: string; color: string }[] | null;
+};
+
+type AgentRun = {
+  id: string;
+  task_type: string;
+  input: string;
+  output: string;
+  next_actions: string[];
+  created_at: string;
+};
+
+type ResearchReport = {
+  id: string;
+  mode: string;
+  title: string;
+  executive_summary: string;
+  findings: string[];
+  kpis: { metric: string; value: string; note: string }[];
+  risks: string[];
+  next_steps: string[];
+  created_at: string;
+};
+
 type SavedAnalysisRow = {
   id: string;
   summary: string;
@@ -63,6 +95,30 @@ const FEEDBACK_OPTIONS = [
 
 const SUBJECT_COLORS = ["#16796f", "#2f6fbb", "#7c5cc4", "#a15c07", "#b42318"];
 const ALL_SUBJECTS = "all";
+
+const KNOWLEDGE_TYPES = [
+  { value: "topic", label: "Thema" },
+  { value: "note", label: "Notiz" },
+  { value: "project", label: "Projekt" },
+  { value: "connection", label: "Zusammenhang" },
+];
+
+const WORKFLOW_TYPES = [
+  { value: "seminararbeit", label: "Seminararbeit" },
+  { value: "literatur", label: "Literatur" },
+  { value: "bewerbung", label: "Bewerbung" },
+  { value: "email", label: "E-Mail" },
+  { value: "meeting", label: "Meeting Notes" },
+  { value: "priorisierung", label: "Priorisierung" },
+];
+
+const RESEARCH_MODES = [
+  { value: "investment_memo", label: "Investment Memo" },
+  { value: "earnings_call", label: "Earnings Call" },
+  { value: "pdf_compare", label: "PDFs vergleichen" },
+  { value: "dd_analysis", label: "DD-Analyse" },
+  { value: "kpi_extraction", label: "KPI Extraction" },
+];
 
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
@@ -122,6 +178,21 @@ function getSubject(subjects: NonNullable<ReturnType<typeof getDocument>>["subje
   return Array.isArray(subjects) ? subjects[0] : subjects;
 }
 
+function getKnowledgeSubject(subjects: KnowledgeItem["subjects"]) {
+  return Array.isArray(subjects) ? subjects[0] : subjects;
+}
+
+function splitCommaList(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getTypeLabel(options: { value: string; label: string }[], value: string) {
+  return options.find((option) => option.value === value)?.label || value;
+}
+
 function countThisMonth(analyses: Analysis[]) {
   const monthStart = getMonthStart();
   return analyses.filter((item) => item.id !== DEMO_ANALYSIS.id && item.created_at && item.created_at >= monthStart)
@@ -142,11 +213,27 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [savedAnalyses, setSavedAnalyses] = useState<Analysis[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
+  const [agentRuns, setAgentRuns] = useState<AgentRun[]>([]);
+  const [researchReports, setResearchReports] = useState<ResearchReport[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState(ALL_SUBJECTS);
   const [uploadSubjectId, setUploadSubjectId] = useState("");
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectColor, setNewSubjectColor] = useState(SUBJECT_COLORS[0]);
   const [creatingSubject, setCreatingSubject] = useState(false);
+  const [knowledgeType, setKnowledgeType] = useState("note");
+  const [knowledgeTitle, setKnowledgeTitle] = useState("");
+  const [knowledgeContent, setKnowledgeContent] = useState("");
+  const [knowledgeTags, setKnowledgeTags] = useState("");
+  const [knowledgeRelated, setKnowledgeRelated] = useState("");
+  const [savingKnowledge, setSavingKnowledge] = useState(false);
+  const [workflowType, setWorkflowType] = useState("seminararbeit");
+  const [workflowInput, setWorkflowInput] = useState("");
+  const [runningWorkflow, setRunningWorkflow] = useState(false);
+  const [researchMode, setResearchMode] = useState("investment_memo");
+  const [researchBrief, setResearchBrief] = useState("");
+  const [researchFiles, setResearchFiles] = useState<File[]>([]);
+  const [runningResearch, setRunningResearch] = useState(false);
   const [usedThisMonth, setUsedThisMonth] = useState(0);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -184,12 +271,18 @@ export default function Home() {
     if (!session) {
       setSavedAnalyses([]);
       setSubjects([]);
+      setKnowledgeItems([]);
+      setAgentRuns([]);
+      setResearchReports([]);
       setUsedThisMonth(0);
       return;
     }
 
     loadSubjects();
     loadAnalyses();
+    loadKnowledgeItems();
+    loadAgentRuns();
+    loadResearchReports();
   }, [session]);
 
   useEffect(() => {
@@ -265,6 +358,63 @@ export default function Home() {
     setUsedThisMonth(usageError ? countThisMonth(analyses) : usageCount || 0);
   }
 
+  async function loadKnowledgeItems() {
+    if (!session) return;
+
+    const response = await fetch("/api/knowledge", {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error || "Wissenssystem konnte nicht geladen werden.");
+      return;
+    }
+
+    setKnowledgeItems(data.items || []);
+  }
+
+  async function loadAgentRuns() {
+    if (!session) return;
+
+    const response = await fetch("/api/workflows", {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error || "Agent-Verlauf konnte nicht geladen werden.");
+      return;
+    }
+
+    setAgentRuns(data.runs || []);
+  }
+
+  async function loadResearchReports() {
+    if (!session) return;
+
+    const response = await fetch("/api/research", {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error || "Research-Verlauf konnte nicht geladen werden.");
+      return;
+    }
+
+    setResearchReports(data.reports || []);
+  }
+
   async function signUp() {
     setMessage("");
     if (!email || !password) {
@@ -297,6 +447,9 @@ export default function Home() {
     setAnalysis(null);
     setSavedAnalyses([]);
     setSubjects([]);
+    setKnowledgeItems([]);
+    setAgentRuns([]);
+    setResearchReports([]);
     setSelectedSubjectId(ALL_SUBJECTS);
     setUploadSubjectId("");
     setUsedThisMonth(0);
@@ -339,6 +492,165 @@ export default function Home() {
     setSelectedSubjectId(data.subject.id);
     setNewSubjectName("");
     setMessage("Fach erstellt.");
+  }
+
+  async function saveKnowledgeItem(source?: "analysis") {
+    if (!session) return;
+
+    const title =
+      source === "analysis" && analysis
+        ? analysis.file_name || "Analyse"
+        : knowledgeTitle.trim();
+    const content =
+      source === "analysis" && analysis
+        ? [
+            analysis.summary,
+            "Key Takeaways:",
+            ...analysis.takeaways.map((item) => `- ${item}`),
+            "Offene Fragen:",
+            ...analysis.open_questions.map((item) => `- ${item}`),
+          ].join("\n")
+        : knowledgeContent.trim();
+
+    setMessage("");
+
+    if (title.length < 2 || content.length < 10) {
+      setMessage("Bitte ergänze Titel und Inhalt für den Wissenseintrag.");
+      return;
+    }
+
+    setSavingKnowledge(true);
+
+    const response = await fetch("/api/knowledge", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        itemType: source === "analysis" ? "topic" : knowledgeType,
+        title,
+        content,
+        subjectId: source === "analysis" ? analysis?.subject_id : selectedSubjectId === ALL_SUBJECTS ? null : selectedSubjectId,
+        analysisId: source === "analysis" && analysis?.id !== DEMO_ANALYSIS.id ? analysis?.id : null,
+        tags: source === "analysis" ? ["analyse"] : splitCommaList(knowledgeTags),
+        relatedTitles: splitCommaList(knowledgeRelated),
+      }),
+    });
+
+    const data = await response.json();
+    setSavingKnowledge(false);
+
+    if (!response.ok) {
+      setMessage(data.error || "Wissenseintrag konnte nicht gespeichert werden.");
+      return;
+    }
+
+    setKnowledgeItems((current) => [data.item, ...current]);
+    if (source !== "analysis") {
+      setKnowledgeTitle("");
+      setKnowledgeContent("");
+      setKnowledgeTags("");
+      setKnowledgeRelated("");
+    }
+    setMessage("Wissenseintrag gespeichert.");
+  }
+
+  async function runWorkflowAgent() {
+    if (!session) return;
+
+    setMessage("");
+
+    if (workflowInput.trim().length < 10) {
+      setMessage("Bitte beschreibe kurz, was der Agent tun soll.");
+      return;
+    }
+
+    setRunningWorkflow(true);
+
+    const response = await fetch("/api/workflows", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        taskType: workflowType,
+        input: workflowInput,
+        analysisId: analysis?.id && analysis.id !== DEMO_ANALYSIS.id ? analysis.id : null,
+      }),
+    });
+
+    const data = await response.json();
+    setRunningWorkflow(false);
+
+    if (!response.ok) {
+      setMessage(data.error || "Workflow-Agent konnte nicht gestartet werden.");
+      return;
+    }
+
+    setAgentRuns((current) => [data.run, ...current]);
+    setWorkflowInput("");
+  }
+
+  function handleResearchFileChange(files: FileList | null) {
+    setMessage("");
+    const nextFiles = Array.from(files || []).slice(0, 2);
+
+    for (const nextFile of nextFiles) {
+      if (nextFile.type !== "application/pdf" && !nextFile.name.toLowerCase().endsWith(".pdf")) {
+        setMessage("Bitte lade nur PDF-Dateien hoch.");
+        return;
+      }
+
+      if (nextFile.size > MAX_PDF_BYTES) {
+        setMessage(`Ein PDF ist zu groß. Bitte lade maximal ${MAX_PDF_SIZE_LABEL} pro Datei hoch.`);
+        return;
+      }
+    }
+
+    setResearchFiles(nextFiles);
+  }
+
+  async function runResearchAssistant() {
+    if (!session) return;
+
+    setMessage("");
+
+    if (researchBrief.trim().length < 10 && researchFiles.length === 0 && !analysis) {
+      setMessage("Bitte gib einen Research-Auftrag ein oder füge Kontext hinzu.");
+      return;
+    }
+
+    setRunningResearch(true);
+
+    const formData = new FormData();
+    formData.append("mode", researchMode);
+    formData.append("brief", researchBrief);
+    if (analysis?.id && analysis.id !== DEMO_ANALYSIS.id) {
+      formData.append("analysis_id", analysis.id);
+    }
+    researchFiles.forEach((researchFile) => formData.append("pdfs", researchFile));
+
+    const response = await fetch("/api/research", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    setRunningResearch(false);
+
+    if (!response.ok) {
+      setMessage(data.error || "Research Assistant konnte keinen Report erstellen.");
+      return;
+    }
+
+    setResearchReports((current) => [data.report, ...current]);
+    setResearchBrief("");
+    setResearchFiles([]);
   }
 
   async function analyzePdf() {
@@ -824,6 +1136,81 @@ export default function Home() {
                 </div>
               </section>
 
+              <section className="panel knowledge-card">
+                <div>
+                  <h2>Wissenssystem</h2>
+                  <p className="muted">Speichere Themen, Notizen, Projekte und Zusammenhänge.</p>
+                </div>
+
+                <label className="field">
+                  <span>Typ</span>
+                  <select value={knowledgeType} onChange={(event) => setKnowledgeType(event.target.value)}>
+                    {KNOWLEDGE_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <input
+                  onChange={(event) => setKnowledgeTitle(event.target.value)}
+                  placeholder="Titel, z. B. DCF Valuation"
+                  value={knowledgeTitle}
+                />
+                <textarea
+                  onChange={(event) => setKnowledgeContent(event.target.value)}
+                  placeholder="Notiz, Projektidee oder Zusammenhang..."
+                  value={knowledgeContent}
+                />
+                <input
+                  onChange={(event) => setKnowledgeTags(event.target.value)}
+                  placeholder="Tags, kommasepariert"
+                  value={knowledgeTags}
+                />
+                <input
+                  onChange={(event) => setKnowledgeRelated(event.target.value)}
+                  placeholder="Verbindungen, z. B. Corporate Finance"
+                  value={knowledgeRelated}
+                />
+                <div className="actions split-actions">
+                  <button disabled={savingKnowledge} onClick={() => saveKnowledgeItem()} type="button">
+                    {savingKnowledge ? "Speichert..." : "Speichern"}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    disabled={!analysis || savingKnowledge}
+                    onClick={() => saveKnowledgeItem("analysis")}
+                    type="button"
+                  >
+                    Analyse merken
+                  </button>
+                </div>
+
+                <div className="knowledge-list">
+                  {knowledgeItems.length === 0 ? (
+                    <p className="muted">Noch keine Einträge gespeichert.</p>
+                  ) : (
+                    knowledgeItems.slice(0, 5).map((item) => {
+                      const subject = getKnowledgeSubject(item.subjects || null);
+
+                      return (
+                        <article key={item.id}>
+                          <span>{getTypeLabel(KNOWLEDGE_TYPES, item.item_type)}</span>
+                          <strong>{item.title}</strong>
+                          {subject && (
+                            <small className="subject-badge">
+                              <span style={{ backgroundColor: subject.color }} />
+                              {subject.name}
+                            </small>
+                          )}
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
             </aside>
 
             <div className="workspace-main">
@@ -990,6 +1377,161 @@ export default function Home() {
                 </div>
               </>
             )}
+              </section>
+
+              <section className="panel phase-panel">
+                <div className="phase-header">
+                  <div>
+                    <p className="eyebrow">Phase 3</p>
+                    <h2>Workflow-Agent</h2>
+                    <p className="muted">
+                      Nutzt dein ausgewähltes Dokument und dein Wissenssystem als Arbeitskontext.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="agent-grid">
+                  <div className="agent-form">
+                    <label className="field">
+                      <span>Aufgabe</span>
+                      <select value={workflowType} onChange={(event) => setWorkflowType(event.target.value)}>
+                        {WORKFLOW_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Briefing</span>
+                      <textarea
+                        onChange={(event) => setWorkflowInput(event.target.value)}
+                        placeholder="Zum Beispiel: Erstelle eine Gliederung für eine Seminararbeit zu Private Equity Value Creation."
+                        value={workflowInput}
+                      />
+                    </label>
+                    <button disabled={runningWorkflow} onClick={runWorkflowAgent} type="button">
+                      {runningWorkflow ? "Agent arbeitet..." : "Workflow starten"}
+                    </button>
+                  </div>
+
+                  <div className="agent-output">
+                    {agentRuns.length === 0 ? (
+                      <div className="empty-state">
+                        <strong>Noch kein Agent-Ergebnis</strong>
+                        <p>Starte einen Workflow, um Struktur, Entwürfe oder Prioritäten zu erzeugen.</p>
+                      </div>
+                    ) : (
+                      <article className="run-card">
+                        <span>{getTypeLabel(WORKFLOW_TYPES, agentRuns[0].task_type)}</span>
+                        <pre>{agentRuns[0].output}</pre>
+                        {agentRuns[0].next_actions.length > 0 && (
+                          <ul className="list">
+                            {agentRuns[0].next_actions.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </article>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <section className="panel phase-panel">
+                <div className="phase-header">
+                  <div>
+                    <p className="eyebrow">Phase 4</p>
+                    <h2>Research Assistant</h2>
+                    <p className="muted">
+                      Erstellt finance- und consulting-nahe Reports aus Briefings, PDFs und gespeicherten Analysen.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="agent-grid">
+                  <div className="agent-form">
+                    <label className="field">
+                      <span>Research-Modus</span>
+                      <select value={researchMode} onChange={(event) => setResearchMode(event.target.value)}>
+                        {RESEARCH_MODES.map((mode) => (
+                          <option key={mode.value} value={mode.value}>
+                            {mode.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Briefing</span>
+                      <textarea
+                        onChange={(event) => setResearchBrief(event.target.value)}
+                        placeholder="Zum Beispiel: Extrahiere KPIs und Risiken aus dem Geschäftsbericht und formuliere ein kurzes Investment Memo."
+                        value={researchBrief}
+                      />
+                    </label>
+                    <label className="upload-zone compact-upload">
+                      <input
+                        accept="application/pdf"
+                        multiple
+                        onChange={(event) => handleResearchFileChange(event.target.files)}
+                        type="file"
+                      />
+                      <strong>
+                        {researchFiles.length > 0
+                          ? researchFiles.map((researchFile) => researchFile.name).join(", ")
+                          : "Optional PDFs hinzufügen"}
+                      </strong>
+                      <span>Maximal 2 Dateien bis je {MAX_PDF_SIZE_LABEL}</span>
+                    </label>
+                    <button disabled={runningResearch} onClick={runResearchAssistant} type="button">
+                      {runningResearch ? "Research läuft..." : "Report erstellen"}
+                    </button>
+                  </div>
+
+                  <div className="agent-output">
+                    {researchReports.length === 0 ? (
+                      <div className="empty-state">
+                        <strong>Noch kein Research-Report</strong>
+                        <p>Starte mit einem Geschäftsbericht, Earnings-Call-Transcript oder Memo-Briefing.</p>
+                      </div>
+                    ) : (
+                      <article className="research-card">
+                        <span>{getTypeLabel(RESEARCH_MODES, researchReports[0].mode)}</span>
+                        <h3>{researchReports[0].title}</h3>
+                        <p>{researchReports[0].executive_summary}</p>
+                        {researchReports[0].kpis.length > 0 && (
+                          <div className="kpi-grid">
+                            {researchReports[0].kpis.slice(0, 4).map((kpi) => (
+                              <div key={`${kpi.metric}-${kpi.value}`}>
+                                <strong>{kpi.metric}</strong>
+                                <span>{kpi.value || "n/a"}</span>
+                                <small>{kpi.note}</small>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="research-columns">
+                          <div>
+                            <strong>Befunde</strong>
+                            <ul className="list">
+                              {researchReports[0].findings.slice(0, 4).map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <strong>Risiken</strong>
+                            <ul className="list">
+                              {researchReports[0].risks.slice(0, 4).map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </article>
+                    )}
+                  </div>
+                </div>
               </section>
             </div>
           </div>

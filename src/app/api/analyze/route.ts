@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { cleanJson } from "@/lib/ai";
 import { createAdminClient } from "@/lib/supabase";
 
 const FREE_MONTHLY_LIMIT = 3;
@@ -11,14 +12,6 @@ type AnalysisResult = {
   open_questions: string[];
   flashcards: { question: string; answer: string }[];
 };
-
-function cleanJson(text: string) {
-  return text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
-}
 
 function validateAnalysis(data: unknown): AnalysisResult {
   const value = data as AnalysisResult;

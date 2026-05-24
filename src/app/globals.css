@@ -1019,6 +1019,158 @@ fieldset {
   margin: 0 0 4px;
 }
 
+.knowledge-card {
+  display: grid;
+  gap: 14px;
+}
+
+.knowledge-card h2,
+.phase-panel h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.split-actions {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.knowledge-list {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.knowledge-list article {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.knowledge-list article > span,
+.run-card > span,
+.research-card > span {
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.knowledge-list strong {
+  line-height: 1.35;
+}
+
+.phase-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.phase-header {
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding-bottom: 14px;
+}
+
+.agent-grid {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.agent-form,
+.agent-output,
+.run-card,
+.research-card {
+  display: grid;
+  gap: 12px;
+}
+
+.agent-form {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.run-card,
+.research-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.run-card pre {
+  color: var(--text);
+  font: inherit;
+  line-height: 1.65;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.research-card h3 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.research-card p {
+  line-height: 1.7;
+  margin: 0;
+}
+
+.compact-upload {
+  padding: 14px;
+}
+
+.kpi-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kpi-grid div {
+  background: var(--info-soft);
+  border: 1px solid #c9dcef;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.kpi-grid span {
+  color: var(--info);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.kpi-grid small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.research-columns {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.research-columns > div {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
 .history h2 {
   font-size: 18px;
   margin: 0 0 4px;
@@ -1227,7 +1379,11 @@ fieldset {
   }
 
   .workspace-main .history-list,
-  .feedback-wide {
+  .feedback-wide,
+  .agent-grid,
+  .kpi-grid,
+  .research-columns,
+  .split-actions {
     grid-template-columns: 1fr;
   }
 

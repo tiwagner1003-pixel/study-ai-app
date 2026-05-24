@@ -11,6 +11,9 @@ Eine erste echte Web-App-Version für Studierende:
 - Kostenloses Monatslimit vorbereiten
 - Tester-Feedback in Supabase sammeln
 - Fächer/Module anlegen und Analysen zuordnen
+- Wissenseinträge für Themen, Notizen, Projekte und Zusammenhänge speichern
+- Workflow-Agent für Seminararbeiten, Literatur, Bewerbungen, E-Mails, Meetings und Priorisierung
+- Research Assistant für Investment Memos, Earnings Calls, PDF-Vergleiche, DD-Analysen und KPI Extraction
 
 ## 1. Node.js installieren
 
@@ -173,11 +176,14 @@ Aktuell enthält sie auch:
 - `usage_events`: zählt PDF-Analysen unabhängig davon, ob ein Nutzer später eine Analyse löscht
 - `feedback`: speichert Tester-Feedback aus dem Formular in der App
 - `subjects`: speichert Fächer/Module und verknüpft Dokumente damit
+- `knowledge_items`: speichert das Second-Brain-Wissenssystem
+- `agent_runs`: speichert Ergebnisse des Workflow-Agents
+- `research_reports`: speichert Finance-/Consulting-Reports
 
 ## Nächste Ausbaustufen
 
 1. Lernfortschritt dauerhaft speichern
 2. Spaced Repetition einbauen
 3. PDF-Dateien in Supabase Storage speichern
-4. Tester einladen und Feedback auswerten
+4. Wissensgraph visualisieren und Einträge automatisch verknüpfen
 5. Stripe Abo einbauen
