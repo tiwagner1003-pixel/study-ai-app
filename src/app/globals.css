@@ -707,6 +707,46 @@ fieldset {
   margin: 0;
 }
 
+.workflow-strip {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workflow-strip button {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-height: 126px;
+  padding: 16px;
+  text-align: left;
+}
+
+.workflow-strip button:hover,
+.workflow-strip button.active {
+  background: var(--accent-soft);
+  border-color: #9bc9c2;
+  color: var(--text);
+  transform: none;
+}
+
+.workflow-strip strong {
+  color: var(--accent-dark);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.workflow-strip span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .study-cockpit {
   display: grid;
   gap: 14px;
@@ -1546,7 +1586,8 @@ fieldset {
   .workspace-hero,
   .workspace-grid,
   .stats,
-  .study-cockpit {
+  .study-cockpit,
+  .workflow-strip {
     grid-template-columns: 1fr;
   }
 
@@ -1570,6 +1611,10 @@ fieldset {
   }
 
   .cockpit-card {
+    min-height: auto;
+  }
+
+  .workflow-strip button {
     min-height: auto;
   }
 

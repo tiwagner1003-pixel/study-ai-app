@@ -133,15 +133,38 @@ const RESEARCH_MODES = [
 ];
 
 const WORKSPACE_SECTIONS = [
-  { id: "lernen", label: "Lernen", description: "PDFs analysieren und Karten üben" },
-  { id: "bibliothek", label: "Bibliothek", description: "Dokumente und Fächer verwalten" },
-  { id: "wissen", label: "Wissen", description: "Notizen und Zusammenhänge speichern" },
-  { id: "agent", label: "Agent", description: "Studien-Workflows erledigen" },
-  { id: "research", label: "Research", description: "Reports und KPIs extrahieren" },
+  { id: "lernen", label: "Unterlagen", description: "PDFs verstehen und Lernkarten üben" },
+  { id: "bibliothek", label: "Bibliothek", description: "Module und Dokumente verwalten" },
+  { id: "wissen", label: "Lernspeicher", description: "Kernwissen langfristig sichern" },
+  { id: "agent", label: "Aufgaben", description: "Aus Wissen konkrete Abgaben bauen" },
+  { id: "research", label: "Vertiefung", description: "Paper, Reports und Cases analysieren" },
   { id: "feedback", label: "Feedback", description: "Produktfeedback geben" },
 ] as const;
 
 type WorkspaceSection = (typeof WORKSPACE_SECTIONS)[number]["id"];
+
+const STUDY_WORKFLOW_STEPS: { section: WorkspaceSection; title: string; body: string }[] = [
+  {
+    section: "lernen",
+    title: "1. Unterlagen verstehen",
+    body: "PDF hochladen, Zusammenfassung lesen, offene Fragen erkennen und Lernkarten starten.",
+  },
+  {
+    section: "wissen",
+    title: "2. Wissen sichern",
+    body: "Wichtige Konzepte, Definitionen und Zusammenhänge in deinen Lernspeicher übernehmen.",
+  },
+  {
+    section: "agent",
+    title: "3. Aufgaben erledigen",
+    body: "Aus deinem Material Gliederungen, Literaturpläne, E-Mails oder To-dos erzeugen.",
+  },
+  {
+    section: "research",
+    title: "4. Vertiefen",
+    body: "Für Hausarbeiten, Cases oder Finance-Themen Reports, Vergleiche und KPIs ableiten.",
+  },
+];
 
 const DEMO_ANALYSIS: Analysis = {
   id: "demo-analysis",
@@ -1086,9 +1109,9 @@ export default function Home() {
           <section className="workspace-hero">
             <div>
               <p className="eyebrow">AI Study Workspace</p>
-              <h1>Dein Lerncockpit für Unterlagen, Wissen und Projekte.</h1>
+              <h1>Ein Lernworkflow vom Dokument bis zur fertigen Abgabe.</h1>
               <p className="muted">
-                Starte mit einer PDF, arbeite aktiv mit Lernkarten und verwandle gute Notizen in ein wachsendes Wissenssystem.
+                Analysiere Unterlagen, sichere Kernwissen und nutze daraus konkrete Arbeitsschritte für Klausuren, Hausarbeiten und Cases.
               </p>
             </div>
             <div className="stats">
@@ -1133,6 +1156,20 @@ export default function Home() {
             <p className="muted">{activeSection.description}</p>
           </section>
 
+          <section className="workflow-strip" aria-label="Lernworkflow">
+            {STUDY_WORKFLOW_STEPS.map((step) => (
+              <button
+                className={activeWorkspaceSection === step.section ? "active" : ""}
+                key={step.section}
+                onClick={() => openWorkspaceSection(step.section)}
+                type="button"
+              >
+                <strong>{step.title}</strong>
+                <span>{step.body}</span>
+              </button>
+            ))}
+          </section>
+
           <section className="study-cockpit" hidden={activeWorkspaceSection !== "lernen"}>
             <article className="cockpit-card primary">
               <span>Aktueller Fokus</span>
@@ -1165,13 +1202,13 @@ export default function Home() {
               </div>
             </article>
             <article className="cockpit-card">
-              <span>Letzter Output</span>
+              <span>Nächster Schritt</span>
               <p>
                 {latestAgentRun
                   ? latestAgentRun.next_actions[0] || "Letztes Agent-Ergebnis prüfen."
                   : latestResearchReport
                     ? latestResearchReport.title
-                    : "Nutze Agent oder Research für Gliederungen, Memos und Aufgabenlisten."}
+                    : "Speichere wichtige Erkenntnisse im Lernspeicher oder starte eine Aufgabenhilfe."}
               </p>
             </article>
           </section>
@@ -1280,9 +1317,9 @@ export default function Home() {
             <div className="workspace-main">
               <section className="panel knowledge-card workspace-section" hidden={activeWorkspaceSection !== "wissen"} id="wissen">
                 <div>
-                  <p className="section-label">Second Brain</p>
-                  <h2>Wissenssystem</h2>
-                  <p className="muted">Speichere Themen, Notizen, Projekte und Zusammenhänge als wiederverwendbare Bausteine.</p>
+                  <p className="section-label">Schritt 2</p>
+                  <h2>Lernspeicher</h2>
+                  <p className="muted">Sichere die wichtigsten Konzepte aus deinen Analysen, damit daraus ein wiederverwendbares Modulwissen entsteht.</p>
                 </div>
 
                 <div className="knowledge-page-grid">
@@ -1300,12 +1337,12 @@ export default function Home() {
 
                     <input
                       onChange={(event) => setKnowledgeTitle(event.target.value)}
-                      placeholder="Titel, z. B. DCF Valuation"
+                      placeholder="Titel, z. B. Principal-Agent-Theorie"
                       value={knowledgeTitle}
                     />
                     <textarea
                       onChange={(event) => setKnowledgeContent(event.target.value)}
-                      placeholder="Notiz, Projektidee oder Zusammenhang..."
+                      placeholder="Definition, Prüfungsnotiz oder Zusammenhang..."
                       value={knowledgeContent}
                     />
                     <input
@@ -1315,7 +1352,7 @@ export default function Home() {
                     />
                     <input
                       onChange={(event) => setKnowledgeRelated(event.target.value)}
-                      placeholder="Verbindungen, z. B. Corporate Finance"
+                      placeholder="Verbindungen, z. B. Finanzierung, Investition"
                       value={knowledgeRelated}
                     />
                     <div className="actions split-actions">
@@ -1336,8 +1373,8 @@ export default function Home() {
                   <div className="knowledge-list">
                     {knowledgeItems.length === 0 ? (
                       <div className="empty-state">
-                        <strong>Noch keine Einträge gespeichert</strong>
-                        <p>Lege dein erstes Thema, Projekt oder eine Verbindung an.</p>
+                        <strong>Noch kein Lernwissen gespeichert</strong>
+                        <p>Übernimm eine Analyse oder lege ein wichtiges Konzept manuell an.</p>
                       </div>
                     ) : (
                       knowledgeItems.map((item) => {
@@ -1534,10 +1571,10 @@ export default function Home() {
               <section className="panel phase-panel workspace-section" hidden={activeWorkspaceSection !== "agent"} id="agent">
                 <div className="phase-header">
                   <div>
-                    <p className="section-label">Produktiv arbeiten</p>
-                    <h2>Workflow-Agent</h2>
+                    <p className="section-label">Schritt 3</p>
+                    <h2>Aufgaben- und Schreibassistent</h2>
                     <p className="muted">
-                      Nutzt dein ausgewähltes Dokument und dein Wissenssystem als Arbeitskontext.
+                      Nutzt deine ausgewählte Analyse und deinen Lernspeicher, um daraus konkrete Studienarbeit zu machen.
                     </p>
                   </div>
                 </div>
@@ -1558,7 +1595,7 @@ export default function Home() {
                       <span>Briefing</span>
                       <textarea
                         onChange={(event) => setWorkflowInput(event.target.value)}
-                        placeholder="Zum Beispiel: Erstelle eine Gliederung für eine Seminararbeit zu Private Equity Value Creation."
+                        placeholder="Zum Beispiel: Erstelle eine Gliederung für eine Seminararbeit zu nachhaltiger Unternehmensfinanzierung."
                         value={workflowInput}
                       />
                     </label>
@@ -1570,8 +1607,8 @@ export default function Home() {
                   <div className="agent-output">
                     {agentRuns.length === 0 ? (
                       <div className="empty-state">
-                        <strong>Noch kein Agent-Ergebnis</strong>
-                        <p>Starte einen Workflow, um Struktur, Entwürfe oder Prioritäten zu erzeugen.</p>
+                        <strong>Noch keine Studienaufgabe gestartet</strong>
+                        <p>Erzeuge aus deinem Lernmaterial eine Gliederung, Literaturstruktur, E-Mail oder To-do-Liste.</p>
                       </div>
                     ) : (
                       <article className="run-card">
@@ -1593,10 +1630,10 @@ export default function Home() {
               <section className="panel phase-panel workspace-section" hidden={activeWorkspaceSection !== "research"} id="research">
                 <div className="phase-header">
                   <div>
-                    <p className="section-label">Finance & Consulting</p>
-                    <h2>Research Assistant</h2>
+                    <p className="section-label">Schritt 4</p>
+                    <h2>Vertiefungsanalyse</h2>
                     <p className="muted">
-                      Erstellt finance- und consulting-nahe Reports aus Briefings, PDFs und gespeicherten Analysen.
+                      Für Hausarbeiten, Cases und anspruchsvolle Module: vergleiche PDFs, extrahiere KPIs und erstelle strukturierte Analyseberichte.
                     </p>
                   </div>
                 </div>
@@ -1604,7 +1641,7 @@ export default function Home() {
                 <div className="agent-grid">
                   <div className="agent-form">
                     <label className="field">
-                      <span>Research-Modus</span>
+                      <span>Analyse-Modus</span>
                       <select value={researchMode} onChange={(event) => setResearchMode(event.target.value)}>
                         {RESEARCH_MODES.map((mode) => (
                           <option key={mode.value} value={mode.value}>
@@ -1617,7 +1654,7 @@ export default function Home() {
                       <span>Briefing</span>
                       <textarea
                         onChange={(event) => setResearchBrief(event.target.value)}
-                        placeholder="Zum Beispiel: Extrahiere KPIs und Risiken aus dem Geschäftsbericht und formuliere ein kurzes Investment Memo."
+                        placeholder="Zum Beispiel: Vergleiche zwei Paper zur Kapitalstruktur und extrahiere zentrale Argumente, KPIs und Risiken."
                         value={researchBrief}
                       />
                     </label>
@@ -1643,8 +1680,8 @@ export default function Home() {
                   <div className="agent-output">
                     {researchReports.length === 0 ? (
                       <div className="empty-state">
-                        <strong>Noch kein Research-Report</strong>
-                        <p>Starte mit einem Geschäftsbericht, Earnings-Call-Transcript oder Memo-Briefing.</p>
+                        <strong>Noch keine Vertiefungsanalyse</strong>
+                        <p>Starte mit Paper, Geschäftsbericht, Case-Material oder einem kurzen Analyseauftrag.</p>
                       </div>
                     ) : (
                       <article className="research-card">
