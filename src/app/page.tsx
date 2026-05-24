@@ -299,6 +299,7 @@ export default function Home() {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const remainingAnalyses = Math.max(FREE_MONTHLY_LIMIT - usedThisMonth, 0);
   const activeCard = analysis?.flashcards[currentCardIndex];
@@ -378,6 +379,32 @@ export default function Home() {
 
     return () => window.removeEventListener("hashchange", updateSectionFromHash);
   }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (activeWorkspaceSection !== "lernen" && activeWorkspaceSection !== "bibliothek") return;
+      if (!analysis || totalCards === 0 || currentCardIndex >= totalCards) return;
+
+      if (e.code === "Space" && !isAnswerVisible) {
+        e.preventDefault();
+        setIsAnswerVisible(true);
+      } else if (e.code === "ArrowRight" && isAnswerVisible) {
+        e.preventDefault();
+        setKnownCards((c) => c + 1);
+        setIsAnswerVisible(false);
+        setCurrentCardIndex((c) => Math.min(c + 1, totalCards));
+      } else if (e.code === "ArrowLeft" && isAnswerVisible) {
+        e.preventDefault();
+        setReviewCards((c) => c + 1);
+        setIsAnswerVisible(false);
+        setCurrentCardIndex((c) => Math.min(c + 1, totalCards));
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeWorkspaceSection, analysis, totalCards, currentCardIndex, isAnswerVisible]);
 
   function openWorkspaceSection(section: WorkspaceSection) {
     setActiveWorkspaceSection(section);
@@ -852,9 +879,6 @@ export default function Home() {
       return;
     }
 
-    const confirmed = window.confirm("Diese Analyse wirklich löschen?");
-    if (!confirmed) return;
-
     setDeletingId(id);
     setMessage("");
 
@@ -928,7 +952,7 @@ export default function Home() {
             <span className="brand-mark">S</span>
             Study AI
           </div>
-          <p className="muted">PDFs in Zusammenfassungen, Fragen und Lernkarten verwandeln.</p>
+          {!session && <p className="muted">PDFs in Zusammenfassungen, Fragen und Lernkarten verwandeln.</p>}
         </div>
         <div className="topbar-actions">
           <a className="text-link" href={getFeedbackHref()}>
@@ -1150,12 +1174,6 @@ export default function Home() {
             ))}
           </nav>
 
-          <section className="workspace-page-title">
-            <p className="section-label">Aktueller Bereich</p>
-            <h2>{activeSection.label}</h2>
-            <p className="muted">{activeSection.description}</p>
-          </section>
-
           <section className="workflow-strip" aria-label="Lernworkflow">
             {STUDY_WORKFLOW_STEPS.map((step) => (
               <button
@@ -1233,13 +1251,18 @@ export default function Home() {
                     ))}
                   </select>
                 </label>
-                <label className="upload-zone">
+                <label
+                  className="upload-zone"
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }}
+                  onDragLeave={(e) => { e.currentTarget.classList.remove("drag-over"); }}
+                  onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("drag-over"); handleFileChange(e.dataTransfer.files?.[0] || null); }}
+                >
                   <input
                     type="file"
                     accept="application/pdf"
                     onChange={(event) => handleFileChange(event.target.files?.[0] || null)}
                   />
-                  <strong>{file ? file.name : "PDF auswählen"}</strong>
+                  <strong>{file ? file.name : "PDF auswählen oder hierher ziehen"}</strong>
                   <span>Nur PDF-Dateien bis {MAX_PDF_SIZE_LABEL}</span>
                 </label>
                 <button disabled={!file || loading || remainingAnalyses === 0} onClick={analyzePdf}>
@@ -1462,18 +1485,29 @@ export default function Home() {
                     )}
                   </div>
                   {analysis.id && (
-                    <button
-                      className="danger-button"
-                      disabled={deletingId === analysis.id}
-                      onClick={() => deleteAnalysis(analysis.id as string)}
-                      type="button"
-                    >
-                      {analysis.id === DEMO_ANALYSIS.id
-                        ? "Demo entfernen"
-                        : deletingId === analysis.id
-                          ? "Löscht..."
-                          : "Löschen"}
-                    </button>
+                    analysis.id === DEMO_ANALYSIS.id ? (
+                      <button className="danger-button" onClick={() => deleteAnalysis(analysis.id as string)} type="button">
+                        Demo entfernen
+                      </button>
+                    ) : pendingDeleteId === analysis.id ? (
+                      <div className="actions">
+                        <button
+                          className="danger-button"
+                          disabled={deletingId === analysis.id}
+                          onClick={() => deleteAnalysis(analysis.id as string)}
+                          type="button"
+                        >
+                          {deletingId === analysis.id ? "Löscht..." : "Ja, löschen"}
+                        </button>
+                        <button className="secondary-button" onClick={() => setPendingDeleteId(null)} type="button">
+                          Abbrechen
+                        </button>
+                      </div>
+                    ) : (
+                      <button className="danger-button" onClick={() => setPendingDeleteId(analysis.id as string)} type="button">
+                        Löschen
+                      </button>
+                    )
                   )}
                 </div>
 
@@ -1553,11 +1587,15 @@ export default function Home() {
                                   Nochmal üben
                                 </button>
                               </div>
+                              <p className="card-hint">← Nochmal &nbsp;·&nbsp; → Gewusst</p>
                             </div>
                           ) : (
-                            <button onClick={() => setIsAnswerVisible(true)} type="button">
-                              Antwort anzeigen
-                            </button>
+                            <>
+                              <button onClick={() => setIsAnswerVisible(true)} type="button">
+                                Antwort anzeigen
+                              </button>
+                              <p className="card-hint">Leertaste = Antwort anzeigen</p>
+                            </>
                           )}
                         </div>
                       )}
